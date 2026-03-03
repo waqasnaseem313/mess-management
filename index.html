@@ -168,23 +168,17 @@ tbody td{padding:10px 13px;color:var(--text-m);vertical-align:middle;}
 </head>
 <body>
 
-<!-- ════════ CONFIG — PASTE YOUR APPS SCRIPT URL HERE ════════ -->
+<!-- ════════ CONFIG ════════ -->
 <script>
-// ⚠️  REPLACE THIS URL with your deployed Apps Script Web App URL
-// After following setup instructions in README.md
 const API_URL = 'https://script.google.com/macros/s/AKfycbyXzSmKZz_VoF70GHHz9NHj_I1Mmucz4N09bhk6nOdQziaBA3gXAZgeqSaNZY_Ofgzq/exec';
 const IS_CONFIGURED = API_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
 
-// ════════════════════════════════════════════════════
-//  ADMIN MEAL PLAN VIEW
-// ════════════════════════════════════════════════════
 async function renderMealPlan() {
   const wrap = document.getElementById('mp-table-wrap');
   const summary = document.getElementById('mp-summary');
   const counts = document.getElementById('mp-counts');
   if(!wrap) return;
   wrap.innerHTML = '<div class="empty">Loading...</div>';
-
   try {
     const wRes = await api('getMealWillingness', {});
     const wAll = wRes.records || [];
@@ -192,7 +186,6 @@ async function renderMealPlan() {
     const dayFilter = document.getElementById('mp-day-filter')?.value || 'all';
     const days = dayFilter === 'all' ? DAYS : [dayFilter];
 
-    // ── Counts summary cards ──
     let totalB=0, totalL=0, totalD=0;
     days.forEach(day => {
       members.forEach(m => {
@@ -208,7 +201,6 @@ async function renderMealPlan() {
       <div class="sc sg"><div class="sl">🌙 Dinners</div><div class="sv">${totalD}</div><div class="ss">${daysLabel}</div></div>
       <div class="sc sr"><div class="sl">📊 Total Meals</div><div class="sv">${totalB+totalL+totalD}</div><div class="ss">To prepare</div></div>`;
 
-    // ── Main table: members × days ──
     const mealEmoji = {Breakfast:'🌅', Lunch:'☀️', Dinner:'🌙'};
     let thead = '<tr><th style="text-align:left;min-width:130px">Member</th>';
     days.forEach(day => {
@@ -232,14 +224,13 @@ async function renderMealPlan() {
 
     wrap.innerHTML = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 
-    // ── Per-day meal counts ──
     let countsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px">';
     days.forEach(day => {
       const bCount = members.filter(m => wAll.find(w => w.memberId===m.id && w.dayMeal===`${day}-Breakfast` && String(w.willing)==='true')).length;
       const lCount = members.filter(m => wAll.find(w => w.memberId===m.id && w.dayMeal===`${day}-Lunch`     && String(w.willing)==='true')).length;
       const dCount = members.filter(m => wAll.find(w => w.memberId===m.id && w.dayMeal===`${day}-Dinner`    && String(w.willing)==='true')).length;
       countsHtml += `
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px">
+        <div style="background:var(--cream);border:1px solid var(--border);border-radius:6px;padding:12px">
           <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;color:var(--army);margin-bottom:8px">${day}</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>🌅 Breakfast</span><strong>${bCount}</strong></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>☀️ Lunch</span><strong>${lCount}</strong></div>
@@ -248,12 +239,10 @@ async function renderMealPlan() {
     });
     countsHtml += '</div>';
     counts.innerHTML = countsHtml;
-
   } catch(e) {
     wrap.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
   }
 }
-
 </script>
 
 <!-- AUTH -->
@@ -264,22 +253,20 @@ async function renderMealPlan() {
       <h2>Officers Mess</h2>
       <p>Management System</p>
     </div>
-    <div id="cfg-warn" style="display:none" class="cfg-banner" style="margin-bottom:16px">
+    <div id="cfg-warn" style="display:none" class="cfg-banner">
       <h3>⚠️ Setup Required</h3>
-      <p>Open <code>index.html</code> and replace <code>YOUR_APPS_SCRIPT_URL_HERE</code> with your Google Apps Script URL. See <strong>README.md</strong> for step-by-step instructions.</p>
+      <p>Open <code>index.html</code> and replace <code>YOUR_APPS_SCRIPT_URL_HERE</code> with your Google Apps Script URL.</p>
     </div>
     <div class="atabs">
       <button class="atab active" onclick="switchTab('login')">Sign In</button>
       <button class="atab" onclick="switchTab('signup')">Register</button>
     </div>
-    <!-- LOGIN -->
     <div id="lform">
       <div class="fg"><label>Email</label><input type="email" id="l-email" placeholder="officer@mess.mil"/></div>
       <div class="fg"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"/></div>
       <button class="btnp" id="l-btn" onclick="doLogin()">Sign In</button>
       <div class="aerr" id="l-err"></div>
     </div>
-    <!-- SIGNUP -->
     <div id="sform" style="display:none">
       <div class="frow">
         <div class="fg"><label>First Name</label><input type="text" id="s-fn" placeholder="Muhammad"/></div>
@@ -296,7 +283,7 @@ async function renderMealPlan() {
       <div class="fg"><label>Password</label><input type="password" id="s-pass" placeholder="Minimum 8 characters"/></div>
       <button class="btnp" id="s-btn" onclick="doSignup()">Submit Registration</button>
       <div class="aerr" id="s-err"></div>
-      <div class="pnotice" id="s-ok">✅ Registration submitted! Your account will be activated after admin approval. Please check back in 24 hours.</div>
+      <div class="pnotice" id="s-ok">✅ Registration submitted! Your account will be activated after admin approval.</div>
     </div>
   </div>
 </div>
@@ -337,13 +324,11 @@ async function renderMealPlan() {
       <div class="dchip" id="datedisp"></div>
     </div>
 
-    <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div class="sgrid" id="d-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="d-bottom"></div>
     </div>
 
-    <!-- MEAL WILLINGNESS -->
     <div class="page" id="page-meals">
       <div id="meals-cutoff-banner" class="alert aw" style="margin-bottom:12px;display:none"></div>
       <div class="alert ai" style="margin-bottom:16px">
@@ -357,7 +342,6 @@ async function renderMealPlan() {
       <div style="text-align:right"><button class="btn barmy" id="btn-save-meals" onclick="saveMeals()">💾 Save Preferences</button></div>
     </div>
 
-    <!-- MY BILL -->
     <div class="page" id="page-mybill">
       <div class="alert ai" id="bill-info"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -367,12 +351,10 @@ async function renderMealPlan() {
       <div class="card"><div class="ctitle">📋 Charge Breakdown</div><div class="twrap" id="my-charges"></div></div>
     </div>
 
-    <!-- PROFILE -->
     <div class="page" id="page-profile">
       <div class="card" style="max-width:500px"><div class="ctitle">👤 My Profile</div><div id="profile-c"></div></div>
     </div>
 
-    <!-- REQUESTS -->
     <div class="page" id="page-requests">
       <div class="card">
         <div class="shead"><h2>Pending Signup Requests</h2><div id="rcount" class="dchip"></div></div>
@@ -380,7 +362,6 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- MEMBERS -->
     <div class="page" id="page-members">
       <div class="card">
         <div class="shead"><h2>Active Members</h2><button class="btn barmy" onclick="openModal('modal-addmember')">+ Add Member</button></div>
@@ -388,12 +369,11 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- ATTENDANCE -->
     <div class="page" id="page-attendance">
       <div class="card" style="margin-bottom:14px">
         <div class="shead"><h2 id="att-title">Attendance</h2>
           <div style="display:flex;gap:8px">
-            <button class="btn bout" onclick="runAutoMark()" title="Auto-fill today from willingness">⚡ Auto-Mark</button>
+            <button class="btn bout" onclick="runAutoMark()">⚡ Auto-Mark</button>
             <button class="btn barmy" onclick="openAttModal()">✏️ Edit Today</button>
           </div>
         </div>
@@ -405,7 +385,6 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- EXPENDITURE -->
     <div class="page" id="page-expenditure">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div class="card">
@@ -424,15 +403,14 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- BILLING -->
     <div class="page" id="page-billing">
       <div class="card" style="margin-bottom:16px">
         <div class="shead"><h2>Monthly Billing Calculator</h2></div>
-        <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px">
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
           <div class="fg" style="margin:0;flex:1;max-width:220px"><label>Select Month</label><input type="month" id="bill-month" onchange="calcBilling()"/></div>
           <button class="btn barmy" onclick="calcBilling()">⟳ Recalculate</button>
-          <button class="btn bout" id="btn-pdf" onclick="downloadBillPDF()" style="display:none">📄 PDF</button>
-          <button class="btn bout" id="btn-excel" onclick="downloadBillExcel()" style="display:none">📊 Excel</button>
+          <button class="btn bout" id="btn-pdf" onclick="downloadBillPDF()" disabled style="opacity:0.5">📄 PDF</button>
+          <button class="btn bout" id="btn-excel" onclick="downloadBillExcel()" disabled style="opacity:0.5">📊 Excel</button>
         </div>
         <div id="bill-header"></div>
       </div>
@@ -442,7 +420,6 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- CHARGES -->
     <div class="page" id="page-charges">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="card">
@@ -461,7 +438,6 @@ async function renderMealPlan() {
       </div>
     </div>
 
-    <!-- REPORTS -->
     <div class="page" id="page-reports">
       <div class="sgrid" id="rpt-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -478,12 +454,9 @@ async function renderMealPlan() {
             <label style="font-size:12px;color:var(--text-s)">Day:</label>
             <select id="mp-day-filter" onchange="renderMealPlan()" style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:4px">
               <option value="all">All Week</option>
-              <option value="Mon">Monday</option>
-              <option value="Tue">Tuesday</option>
-              <option value="Wed">Wednesday</option>
-              <option value="Thu">Thursday</option>
-              <option value="Fri">Friday</option>
-              <option value="Sat">Saturday</option>
+              <option value="Mon">Monday</option><option value="Tue">Tuesday</option>
+              <option value="Wed">Wednesday</option><option value="Thu">Thursday</option>
+              <option value="Fri">Friday</option><option value="Sat">Saturday</option>
               <option value="Sun">Sunday</option>
             </select>
           </div>
@@ -495,13 +468,12 @@ async function renderMealPlan() {
         <div class="twrap" id="mp-table-wrap"></div>
       </div>
       <div class="card" style="margin-top:14px">
-        <div class="ctitle">🍳 Meal Count Summary (How many to prepare)</div>
+        <div class="ctitle">🍳 Meal Count Summary</div>
         <div id="mp-counts"></div>
       </div>
     </div>
-
-  </div><!-- /main -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <!-- MODALS -->
 <div class="moverlay" id="modal-att">
@@ -524,7 +496,7 @@ async function renderMealPlan() {
     <div class="fg"><label>Service No.</label><input id="am-svc" type="text" placeholder="SVC-XXXX"/></div>
     <div class="fg"><label>Email</label><input id="am-email" type="email"/></div>
     <div class="fg"><label>Advance (Rs.)</label><input id="am-adv" type="number" value="6000"/></div>
-    <p style="font-size:11px;color:var(--text-s);margin-top:-6px">Default password will be: <strong>mess@1234</strong></p>
+    <p style="font-size:11px;color:var(--text-s);margin-top:-6px">Default password: <strong>mess@1234</strong></p>
     <div class="mftr">
       <button class="btn bout" onclick="closeModal('modal-addmember')">Cancel</button>
       <button class="btn barmy" onclick="saveMember()">Add Member</button>
@@ -535,106 +507,61 @@ async function renderMealPlan() {
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════
-let S = {
-  user: null,
-  members: [],
-  requests: [],
-  attendance: [],
-  expenditure: [],
-  charges: [],
-  mealWillingness: {},
-  currentMonth: '',
-};
-
+// ════ STATE ════
+let S = { user:null, members:[], requests:[], attendance:[], expenditure:[], charges:[], mealWillingness:{}, currentMonth:'' };
 const TODAY = new Date();
 const MONTH = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MEALS = ['Breakfast','Lunch','Dinner'];
 const MEAL_ICONS = {Breakfast:'🌅',Lunch:'☀️',Dinner:'🌙'};
 const MEAL_TIMES = {Breakfast:'07:00–09:00',Lunch:'13:00–14:30',Dinner:'20:00–21:30'};
+let _billData = null;
 
-// ════════════════════════════════════════════════════
-//  API
-// ════════════════════════════════════════════════════
+// ════ API ════
 async function api(action, data={}) {
-  if (!IS_CONFIGURED) {
-    showToast('⚠️ Please configure API_URL first. See README.md', true);
-    throw new Error('Not configured');
-  }
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action, ...data }),
-  });
+  if (!IS_CONFIGURED) { showToast('⚠️ Please configure API_URL first.',true); throw new Error('Not configured'); }
+  const res = await fetch(API_URL, { method:'POST', body:JSON.stringify({action,...data}) });
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || 'API error');
+  if (!json.success) throw new Error(json.error||'API error');
   return json;
 }
 
-// ════════════════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════════════════
+// ════ INIT ════
 window.onload = () => {
-  if (!IS_CONFIGURED) document.getElementById('cfg-warn').style.display = 'block';
+  if (!IS_CONFIGURED) document.getElementById('cfg-warn').style.display='block';
   document.getElementById('datedisp').textContent = TODAY.toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 };
 
-// ════════════════════════════════════════════════════
-//  AUTH
-// ════════════════════════════════════════════════════
+// ════ AUTH ════
 function switchTab(t) {
   document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('active',(t==='login'&&i===0)||(t==='signup'&&i===1)));
-  document.getElementById('lform').style.display = t==='login'?'':'none';
-  document.getElementById('sform').style.display = t==='signup'?'':'none';
+  document.getElementById('lform').style.display=t==='login'?'':'none';
+  document.getElementById('sform').style.display=t==='signup'?'':'none';
 }
-
 async function doLogin() {
-  const email = document.getElementById('l-email').value.trim();
-  const password = document.getElementById('l-pass').value;
-  const btn = document.getElementById('l-btn');
-  const err = document.getElementById('l-err');
+  const email=document.getElementById('l-email').value.trim(), password=document.getElementById('l-pass').value;
+  const btn=document.getElementById('l-btn'), err=document.getElementById('l-err');
   err.style.display='none';
   if(!email||!password){showErr(err,'Please enter email and password.');return;}
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Signing in...';
-  try {
-    const r = await api('login',{email,password});
-    S.user = r.member;
-    bootApp();
-  } catch(e) {
-    showErr(err, e.message);
-    btn.disabled=false; btn.innerHTML='Sign In';
-  }
+  try { const r=await api('login',{email,password}); S.user=r.member; bootApp(); }
+  catch(e){ showErr(err,e.message); btn.disabled=false; btn.innerHTML='Sign In'; }
 }
-
 async function doSignup() {
-  const fname=document.getElementById('s-fn').value.trim();
-  const lname=document.getElementById('s-ln').value.trim();
-  const rank=document.getElementById('s-rank').value;
-  const svc=document.getElementById('s-svc').value.trim();
-  const email=document.getElementById('s-email').value.trim();
-  const password=document.getElementById('s-pass').value;
-  const btn=document.getElementById('s-btn');
-  const err=document.getElementById('s-err');
+  const fn=document.getElementById('s-fn').value.trim(), ln=document.getElementById('s-ln').value.trim();
+  const rank=document.getElementById('s-rank').value, svc=document.getElementById('s-svc').value.trim();
+  const email=document.getElementById('s-email').value.trim(), password=document.getElementById('s-pass').value;
+  const btn=document.getElementById('s-btn'), err=document.getElementById('s-err');
   err.style.display='none';
-  if(!fname||!lname||!svc||!email||!password){showErr(err,'Please fill all fields.');return;}
+  if(!fn||!ln||!svc||!email||!password){showErr(err,'Please fill all fields.');return;}
   if(password.length<8){showErr(err,'Password must be at least 8 characters.');return;}
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Submitting...';
-  try {
-    await api('signup',{fname,lname,rank,svc,email,password});
-    document.getElementById('s-ok').style.display='block';
-    btn.style.display='none';
-  } catch(e) {
-    showErr(err,e.message);
-    btn.disabled=false; btn.innerHTML='Submit Registration';
-  }
+  try { await api('signup',{fname:fn,lname:ln,rank,svc,email,password}); document.getElementById('s-ok').style.display='block'; btn.style.display='none'; }
+  catch(e){ showErr(err,e.message); btn.disabled=false; btn.innerHTML='Submit Registration'; }
 }
-
-function showErr(el, msg) { el.textContent=msg; el.style.display='block'; }
-
+function showErr(el,msg){el.textContent=msg;el.style.display='block';}
 async function bootApp() {
-  const u = S.user;
+  const u=S.user;
   document.getElementById('auth').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('sb-rank').textContent=u.rank;
@@ -644,21 +571,15 @@ async function bootApp() {
   badge.className=`ubadge ${u.role==='admin'?'ba':'bm'}`;
   document.getElementById('admin-nav').style.display=u.role==='admin'?'':'none';
   S.currentMonth=MONTH;
-  // Preload data
   try {
-    const [mRes] = await Promise.all([api('getMembers')]);
-    S.members = Object.values((mRes.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
-    if(u.role==='admin'){
-      const rRes = await api('getRequests');
-      S.requests = rRes.requests;
-      document.getElementById('rbadge').textContent=S.requests.length;
-    }
+    const [mRes]=await Promise.all([api('getMembers')]);
+    S.members=Object.values((mRes.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
+    if(u.role==='admin'){ const rRes=await api('getRequests'); S.requests=rRes.requests; document.getElementById('rbadge').textContent=S.requests.length; }
   } catch(e){}
   go('dashboard');
 }
-
 function logout() {
-  S = {user:null,members:[],requests:[],attendance:[],expenditure:[],charges:[],mealWillingness:{},currentMonth:''};
+  S={user:null,members:[],requests:[],attendance:[],expenditure:[],charges:[],mealWillingness:{},currentMonth:''};
   document.getElementById('app').style.display='none';
   document.getElementById('auth').style.display='flex';
   document.getElementById('l-err').style.display='none';
@@ -666,11 +587,8 @@ function logout() {
   document.getElementById('l-pass').value='';
 }
 
-// ════════════════════════════════════════════════════
-//  NAVIGATION
-// ════════════════════════════════════════════════════
+// ════ NAVIGATION ════
 const PAGE_TITLES={dashboard:'🏠 Dashboard',meals:'🍽️ Meal Willingness',mybill:'📄 My Bill',profile:'👤 My Profile',requests:'📋 Signup Requests',members:'👥 Members',attendance:'📊 Attendance',expenditure:'💰 Expenditure',billing:'🧾 Monthly Billing',charges:'➕ Custom Charges',reports:'📈 Reports',mealplan:'📋 Meal Plan'};
-
 function go(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
@@ -680,7 +598,6 @@ function go(id) {
   document.getElementById('ptitle').textContent=PAGE_TITLES[id]||id;
   renderPage(id);
 }
-
 async function renderPage(id) {
   switch(id){
     case 'dashboard': await renderDash(); break;
@@ -698,22 +615,18 @@ async function renderPage(id) {
   }
 }
 
-// ════════════════════════════════════════════════════
-//  HELPERS
-// ════════════════════════════════════════════════════
+// ════ HELPERS ════
 function monthName(ym){if(!ym)return'';const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-PK',{month:'long',year:'numeric'});}
 function calcTotalMeals(att){let t=0;att.forEach(a=>{if(String(a.breakfast)==='true')t++;if(String(a.lunch)==='true')t++;if(String(a.dinner)==='true')t++;});return t;}
 function getMemberMeals(att,mid){let t=0;att.filter(a=>a.memberId===mid).forEach(a=>{if(String(a.breakfast)==='true')t++;if(String(a.lunch)==='true')t++;if(String(a.dinner)==='true')t++;});return t;}
 function getMemberMealType(att,mid,type){return att.filter(a=>a.memberId===mid&&String(a[type])==='true').length;}
 function getCustomTotal(charges,mid,ym){return charges.filter(c=>c.month===ym&&(c.memberId==='all'||c.memberId===mid)).reduce((a,b)=>a+Number(b.amount),0);}
-function loading(el){document.getElementById(el).innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';}
+function loading(el){const e=document.getElementById(el);if(e)e.innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';}
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.borderLeftColor=err?'var(--red)':'var(--gold)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ════════════════════════════════════════════════════
-//  DASHBOARD
-// ════════════════════════════════════════════════════
+// ════ DASHBOARD ════
 async function renderDash() {
   const u=S.user, isAdmin=u.role==='admin';
   const st=document.getElementById('d-stats');
@@ -728,7 +641,6 @@ async function renderDash() {
     const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
     const totalMeals=calcTotalMeals(att);
     const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
-
     if(isAdmin){
       st.innerHTML=`
         <div class="sc sa"><div class="sl">Active Members</div><div class="sv">${S.members.length}</div><div class="ss">Officers in mess</div></div>
@@ -748,9 +660,7 @@ async function renderDash() {
         <div class="sc sg"><div class="sl">Advance Balance</div><div class="sv">Rs.${Math.abs(bal).toLocaleString()}</div><div class="ss">${bal>=0?'Surplus':'Deficit'}</div></div>
         <div class="sc sr"><div class="sl">Custom Charges</div><div class="sv">Rs.${myCustom.toLocaleString()}</div><div class="ss">This month</div></div>`;
     }
-
-    // Bottom cards
-    const todayDay=DAYS[((TODAY.getDay()+6)%7)]; // Mon=0
+    const todayDay=DAYS[((TODAY.getDay()+6)%7)];
     const w=S.mealWillingness[u.id]||{};
     document.getElementById('d-bottom').innerHTML=`
       <div class="card">
@@ -770,35 +680,24 @@ async function renderDash() {
   } catch(e){ st.innerHTML=`<div class="empty">Error loading data: ${e.message}</div>`; }
 }
 
-// ════════════════════════════════════════════════════
-//  MEAL WILLINGNESS
-// ════════════════════════════════════════════════════
-// ── Cutoff times PKT: Breakfast 7AM, Lunch 9AM, Dinner 3PM ──
+// ════ MEAL WILLINGNESS ════
 const MEAL_CUTOFFS = {Breakfast:7, Lunch:9, Dinner:15};
-
 function getPKTHour() {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset()*60000;
-  const pkt = new Date(utc + 5*3600000);
-  return pkt.getHours() + pkt.getMinutes()/60;
+  const now=new Date(), utc=now.getTime()+now.getTimezoneOffset()*60000;
+  const pkt=new Date(utc+5*3600000);
+  return pkt.getHours()+pkt.getMinutes()/60;
 }
-
 function getTodayDayAbbr() {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset()*60000;
-  const pkt = new Date(utc + 5*3600000);
+  const now=new Date(), utc=now.getTime()+now.getTimezoneOffset()*60000;
+  const pkt=new Date(utc+5*3600000);
   return DAYS[(pkt.getDay()+6)%7];
 }
-
-function isMealLocked(day, meal) {
-  const todayDay = getTodayDayAbbr();
-  const todayIdx = DAYS.indexOf(todayDay);
-  const dayIdx   = DAYS.indexOf(day);
-  if (dayIdx < todayIdx) return true;
-  if (dayIdx > todayIdx) return false;
-  return getPKTHour() >= MEAL_CUTOFFS[meal];
+function isMealLocked(day,meal) {
+  const todayDay=getTodayDayAbbr(), todayIdx=DAYS.indexOf(todayDay), dayIdx=DAYS.indexOf(day);
+  if(dayIdx<todayIdx) return true;
+  if(dayIdx>todayIdx) return false;
+  return getPKTHour()>=MEAL_CUTOFFS[meal];
 }
-
 async function renderMeals() {
   const u=S.user;
   document.getElementById('mgrid').innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';
@@ -810,10 +709,8 @@ async function renderMeals() {
     const todayDay=getTodayDayAbbr();
     const lockedToday=MEALS.filter(m=>isMealLocked(todayDay,m));
     const banner=document.getElementById('meals-cutoff-banner');
-    if(lockedToday.length>0){
-      banner.style.display='block';
-      banner.innerHTML=`⏰ Today's <strong>${lockedToday.join(', ')}</strong> preference${lockedToday.length>1?'s are':' is'} locked and auto-marked as attendance.`;
-    } else { banner.style.display='none'; }
+    if(lockedToday.length>0){banner.style.display='block';banner.innerHTML=`⏰ Today's <strong>${lockedToday.join(', ')}</strong> preference${lockedToday.length>1?'s are':' is'} locked.`;}
+    else{banner.style.display='none';}
     document.getElementById('mgrid').innerHTML=DAYS.map(day=>`
       <div class="mday">
         <div class="mdayh">${day}${day===todayDay?' <span style="font-size:10px;opacity:0.8">(Today)</span>':''}</div>
@@ -821,20 +718,14 @@ async function renderMeals() {
           ${MEALS.map(meal=>{
             const key=`${day}-${meal}`,on=!!prefs[key],locked=isMealLocked(day,meal);
             return `<div class="mslot ${on?'on':''} ${locked?'locked':''}" id="slot-${day}-${meal}">
-              <div>
-                <div class="mname">${MEAL_ICONS[meal]} ${meal}${locked?' 🔒':''}</div>
-                <div class="mtime">${MEAL_TIMES[meal]}</div>
-              </div>
-              <button class="tog ${on?'on':''}" id="tog-${day}-${meal}"
-                onclick="toggleMeal('${day}','${meal}')">
-              </button>
+              <div><div class="mname">${MEAL_ICONS[meal]} ${meal}${locked?' 🔒':''}</div><div class="mtime">${MEAL_TIMES[meal]}</div></div>
+              <button class="tog ${on?'on':''}" id="tog-${day}-${meal}" onclick="toggleMeal('${day}','${meal}')"></button>
             </div>`;
           }).join('')}
         </div>
       </div>`).join('');
   } catch(e){document.getElementById('mgrid').innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
 }
-
 function toggleMeal(day,meal) {
   if(isMealLocked(day,meal)){showToast('⏰ Cutoff passed — this meal is locked.',true);return;}
   const u=S.user;
@@ -845,29 +736,18 @@ function toggleMeal(day,meal) {
   document.getElementById(`tog-${day}-${meal}`).className=`tog ${on?'on':''}`;
   document.getElementById(`slot-${day}-${meal}`).className=`mslot ${on?'on':''}`;
 }
-
 async function saveMeals() {
-  const u=S.user;
-  const prefs=S.mealWillingness[u.id]||{};
-  try {
-    await api('saveMealWillingness',{memberId:u.id,preferences:prefs});
-    showToast('✅ Preferences saved!');
-  } catch(e){showToast('Error: '+e.message,true);}
+  const u=S.user, prefs=S.mealWillingness[u.id]||{};
+  try { await api('saveMealWillingness',{memberId:u.id,preferences:prefs}); showToast('✅ Preferences saved!'); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  MY BILL
-// ════════════════════════════════════════════════════
+// ════ MY BILL ════
 async function renderMyBill() {
   const u=S.user;
   loading('my-meals'); loading('my-bsum'); loading('my-charges');
   try {
-    const [attRes,expRes,chgRes,wRes]=await Promise.all([
-      api('getAttendance',{month:MONTH}),
-      api('getExpenditure',{month:MONTH}),
-      api('getCharges',{month:MONTH}),
-      api('getMealWillingness',{memberId:u.id}),
-    ]);
+    const [attRes,expRes,chgRes]=await Promise.all([api('getAttendance',{month:MONTH}),api('getExpenditure',{month:MONTH}),api('getCharges',{month:MONTH})]);
     const att=attRes.records,exp=expRes.records,chg=chgRes.records;
     const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
     const totalMeals=calcTotalMeals(att);
@@ -879,9 +759,7 @@ async function renderMyBill() {
     const myCost=myMeals*perMeal;
     const myChg=chg.filter(c=>c.memberId==='all'||c.memberId===u.id);
     const myCustom=myChg.reduce((a,b)=>a+Number(b.amount),0);
-    const gross=myCost+myCustom;
-    const adv=Number(u.advance)||6000;
-    const bal=adv-gross;
+    const gross=myCost+myCustom, adv=Number(u.advance)||6000, bal=adv-gross;
     document.getElementById('bill-info').textContent=`Bill for ${monthName(MONTH)} — Per meal rate: Rs.${perMeal} | Total expenditure: Rs.${totalExp.toLocaleString()} ÷ ${totalMeals} meals`;
     document.getElementById('my-meals').innerHTML=`
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:10px">
@@ -899,7 +777,7 @@ async function renderMyBill() {
       ${myChg.map(c=>`<div class="brow2"><span>${c.name}</span><span class="amt debit">Rs.${Number(c.amount).toLocaleString()}</span></div>`).join('')}
       <div class="brow2"><span>Gross Total</span><span class="amt debit">Rs.${gross.toLocaleString()}</span></div>
       <div class="brow2"><span>Advance Paid</span><span class="amt credit">Rs.${adv.toLocaleString()}</span></div>
-      <div class="brow2"><span>${bal>=0?'💚 Surplus / Refund':'🔴 Amount Due'}</span><span class="amt ${bal>=0?'credit':'debit'}">Rs.${Math.abs(bal).toLocaleString()}</span></div>`;
+      <div class="brow2"><span>${bal>=0?'💚 Surplus':'🔴 Amount Due'}</span><span class="amt ${bal>=0?'credit':'debit'}">Rs.${Math.abs(bal).toLocaleString()}</span></div>`;
     document.getElementById('my-charges').innerHTML=`<table><thead><tr><th>#</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody>
       <tr><td>1</td><td>Meal charges (${myMeals} meals @ Rs.${perMeal})</td><td><span class="pill pa">Mess</span></td><td>${myCost.toLocaleString()}</td></tr>
       ${myChg.map((c,i)=>`<tr><td>${i+2}</td><td>${c.name}${c.notes?` — <em style="color:var(--text-s)">${c.notes}</em>`:''}</td><td><span class="pill pb">Custom</span></td><td>${Number(c.amount).toLocaleString()}</td></tr>`).join('')}
@@ -908,9 +786,7 @@ async function renderMyBill() {
   } catch(e){showToast('Error loading bill: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  PROFILE
-// ════════════════════════════════════════════════════
+// ════ PROFILE ════
 function renderProfile() {
   const u=S.user;
   document.getElementById('profile-c').innerHTML=`
@@ -929,14 +805,11 @@ function renderProfile() {
     <button class="btn barmy" onclick="showToast('✅ Profile updated (local only)')">Save Changes</button>`;
 }
 
-// ════════════════════════════════════════════════════
-//  ADMIN — REQUESTS
-// ════════════════════════════════════════════════════
+// ════ REQUESTS ════
 async function renderRequests() {
   loading('req-tbody');
   try {
-    const r=await api('getRequests');
-    S.requests=r.requests;
+    const r=await api('getRequests'); S.requests=r.requests;
     document.getElementById('rbadge').textContent=S.requests.length;
     document.getElementById('rcount').textContent=`${S.requests.length} pending`;
     document.getElementById('req-tbody').innerHTML=S.requests.length===0
@@ -945,46 +818,39 @@ async function renderRequests() {
           <td><strong>${r.fname} ${r.lname}</strong></td><td>${r.rank}</td><td>${r.svc}</td><td>${r.email}</td>
           <td>${String(r.appliedAt).substring(0,10)}</td>
           <td><div class="brow">
-            <button class="btn bsm bgreen" id="appbtn-${r.id}" onclick="approveReq('${r.id}', this)">✔ Approve</button>
+            <button class="btn bsm bgreen" id="appbtn-${r.id}" onclick="approveReq('${r.id}',this)">✔ Approve</button>
             <button class="btn bsm bred" onclick="rejectReq('${r.id}')">✘ Reject</button>
           </div></td>
         </tr>`).join('');
   } catch(e){document.getElementById('req-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
-
-const _approvingIds = new Set();
-async function approveReq(id, btn) {
-  if(_approvingIds.has(id)){showToast('⚠️ Already processing, please wait...',true);return;}
+const _approvingIds=new Set();
+async function approveReq(id,btn) {
+  if(_approvingIds.has(id)){showToast('⚠️ Already processing...',true);return;}
   _approvingIds.add(id);
   if(btn){btn.disabled=true;btn.textContent='...';}
   try {
     const res=await api('approveRequest',{requestId:id});
-    if(res && res.success===false){showToast('⚠️ '+res.error,true);return;}
+    if(res&&res.success===false){showToast('⚠️ '+res.error,true);return;}
     const req=S.requests.find(r=>r.id===id);
     showToast(`✅ ${req?.fname} ${req?.lname} approved.`);
     const mRes=await api('getMembers');
     S.members=Object.values((mRes.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
-    await renderRequests();
-    populateMemberSelect();
+    await renderRequests(); populateMemberSelect();
   } catch(e){showToast('Error: '+e.message,true);}
   finally{_approvingIds.delete(id);}
 }
-
 async function rejectReq(id) {
-  try {
-    await api('rejectRequest',{requestId:id});
-    showToast('Request rejected.');
-    await renderRequests();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { await api('rejectRequest',{requestId:id}); showToast('Request rejected.'); await renderRequests(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  ADMIN — MEMBERS
-// ════════════════════════════════════════════════════
+// ════ MEMBERS ════
 async function renderMembers() {
   loading('mem-tbody');
   try {
-    const r=await api('getMembers'); S.members=Object.values((r.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
+    const r=await api('getMembers');
+    S.members=Object.values((r.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
     document.getElementById('mem-tbody').innerHTML=S.members.map(m=>`<tr>
       <td><strong>${m.rank}</strong><br><span style="font-size:11px">${m.fname} ${m.lname}</span></td>
       <td>${m.svc}</td><td>${m.email}</td><td>Rs.${Number(m.advance||6000).toLocaleString()}</td>
@@ -997,49 +863,33 @@ async function renderMembers() {
     populateMemberSelect();
   } catch(e){document.getElementById('mem-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
-
 async function saveMember() {
-  const fn=document.getElementById('am-fn').value.trim(),ln=document.getElementById('am-ln').value.trim();
-  const rank=document.getElementById('am-rank').value,svc=document.getElementById('am-svc').value.trim();
-  const email=document.getElementById('am-email').value.trim(),adv=parseInt(document.getElementById('am-adv').value)||6000;
+  const fn=document.getElementById('am-fn').value.trim(), ln=document.getElementById('am-ln').value.trim();
+  const rank=document.getElementById('am-rank').value, svc=document.getElementById('am-svc').value.trim();
+  const email=document.getElementById('am-email').value.trim(), adv=parseInt(document.getElementById('am-adv').value)||6000;
   if(!fn||!ln||!svc||!email){showToast('Fill all fields',true);return;}
-  try {
-    const r=await api('addMember',{fname:fn,lname:ln,rank,svc,email,advance:adv});
-    closeModal('modal-addmember');
-    showToast('✅ '+r.message);
-    await renderMembers();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { const r=await api('addMember',{fname:fn,lname:ln,rank,svc,email,advance:adv}); closeModal('modal-addmember'); showToast('✅ '+r.message); await renderMembers(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
-
 async function editAdv(id,name,current) {
   const v=prompt(`Edit advance for ${name}:`,current);
   if(v===null)return;
-  try {
-    await api('updateAdvance',{memberId:id,advance:parseInt(v)||6000});
-    showToast('✅ Advance updated.');
-    await renderMembers();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { await api('updateAdvance',{memberId:id,advance:parseInt(v)||6000}); showToast('✅ Advance updated.'); await renderMembers(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
-
 async function deactivate(id,name) {
   if(!confirm(`Remove ${name} from active members?`))return;
-  try {
-    await api('deactivateMember',{memberId:id});
-    showToast('Member removed.');
-    await renderMembers();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { await api('deactivateMember',{memberId:id}); showToast('Member removed.'); await renderMembers(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  ATTENDANCE
-// ════════════════════════════════════════════════════
+// ════ ATTENDANCE ════
 async function renderAttendance() {
   document.getElementById('att-title').textContent=`Attendance — ${monthName(MONTH)}`;
   loading('att-tbody');
   try {
     const [attRes,wRes]=await Promise.all([api('getAttendance',{month:MONTH}),api('getMealWillingness',{})]);
-    const att=attRes.records;
-    const wAll=wRes.records;
+    const att=attRes.records, wAll=wRes.records;
     const totalB=att.filter(a=>String(a.breakfast)==='true').length;
     const totalL=att.filter(a=>String(a.lunch)==='true').length;
     const totalD=att.filter(a=>String(a.dinner)==='true').length;
@@ -1059,118 +909,70 @@ async function renderAttendance() {
     }).join('');
   } catch(e){document.getElementById('att-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
-
-// ── Auto-mark attendance from willingness after cutoff ──
-// Admin-edited dates are stored here so auto-mark never overwrites them
-const ADMIN_EDITED_DATES = new Set(); // in-memory only, resets each session
-
-function markDateAdminEdited(dateStr) {
-  ADMIN_EDITED_DATES.add(dateStr);
-  // stored in memory only
-}
-
+const ADMIN_EDITED_DATES=new Set();
+function markDateAdminEdited(d){ADMIN_EDITED_DATES.add(d);}
 async function autoMarkFromWillingness() {
   try {
-    const todayDay = getTodayDayAbbr();
-    const dateStr  = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
-
-    // If admin has manually edited today, do NOT overwrite
-    if(ADMIN_EDITED_DATES.has(dateStr)) {
-      showToast('ℹ️ Admin has manually edited today — auto-mark skipped.',false);
-      return null;
-    }
-
-    const wRes = await api('getMealWillingness',{});
-    const wAll = wRes.records || [];
-
-    // Overwrite everything — willingness always wins (for locked meals only)
-    const entries = S.members.map(m => ({
-      memberId  : m.id,
-      breakfast : isMealLocked(todayDay,'Breakfast')
-                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true')
-                  : false,
-      lunch     : isMealLocked(todayDay,'Lunch')
-                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch` && String(w.willing)==='true')
-                  : false,
-      dinner    : isMealLocked(todayDay,'Dinner')
-                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner` && String(w.willing)==='true')
-                  : false,
+    const todayDay=getTodayDayAbbr();
+    const dateStr=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
+    if(ADMIN_EDITED_DATES.has(dateStr)){showToast('ℹ️ Admin edited today — auto-mark skipped.');return null;}
+    const wRes=await api('getMealWillingness',{});
+    const wAll=wRes.records||[];
+    const entries=S.members.map(m=>({
+      memberId:m.id,
+      breakfast:isMealLocked(todayDay,'Breakfast')?!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Breakfast`&&String(w.willing)==='true'):false,
+      lunch:isMealLocked(todayDay,'Lunch')?!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Lunch`&&String(w.willing)==='true'):false,
+      dinner:isMealLocked(todayDay,'Dinner')?!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Dinner`&&String(w.willing)==='true'):false,
     }));
-
     await api('saveAttendance',{date:dateStr,entries,markedBy:'AutoMark'});
-    return {entries, dateStr};
-  } catch(e) { console.error('Auto-mark error:',e); return null; }
+    return {entries,dateStr};
+  } catch(e){console.error('Auto-mark error:',e);return null;}
 }
-
 async function runAutoMark() {
   showToast('⚡ Auto-marking from willingness...');
-  const result = await autoMarkFromWillingness();
-  if(result) {
-    showToast('✅ Attendance auto-marked from meal willingness!');
-    await renderAttendance();
-  } else {
-    showToast('❌ Auto-mark failed. Check console.',true);
-  }
+  const result=await autoMarkFromWillingness();
+  if(result){showToast('✅ Attendance auto-marked!');await renderAttendance();}
+  else{showToast('❌ Auto-mark failed.',true);}
 }
-
-async function openAttModal(dateOverride) {
-  const dateStr = dateOverride || new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
+async function openAttModal() {
+  const dateStr=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
   document.getElementById('att-date-lbl').textContent=`Date: ${dateStr}`;
   try {
-    const [attRes, wRes] = await Promise.all([
-      api('getAttendance',{month:MONTH}),
-      api('getMealWillingness',{})
-    ]);
-    const todayAtt = attRes.records.filter(a=>String(a.date).startsWith(dateStr));
-    const wAll     = wRes.records || [];
-    const todayDay = getTodayDayAbbr();
-
-    const todayDateStr = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
-    const alreadyEdited = ADMIN_EDITED_DATES.has(todayDateStr);
+    const [attRes,wRes]=await Promise.all([api('getAttendance',{month:MONTH}),api('getMealWillingness',{})]);
+    const todayAtt=attRes.records.filter(a=>String(a.date).startsWith(dateStr));
+    const wAll=wRes.records||[];
+    const todayDay=getTodayDayAbbr();
+    const alreadyEdited=ADMIN_EDITED_DATES.has(dateStr);
     document.getElementById('att-modal-c').innerHTML=`
       <div style="font-size:11px;color:var(--text-s);margin-bottom:10px;background:${alreadyEdited?'#fef3cd':'#f5f5e8'};padding:8px;border-radius:4px">
-        ${alreadyEdited
-          ? '⚠️ You have manually edited today. Auto-mark is <strong>disabled</strong> for today. Saving again will keep your edits.'
-          : '🔒 Locked meals are auto-filled from willingness. Saving here disables auto-mark for today.'}
+        ${alreadyEdited?'⚠️ You have manually edited today. Auto-mark is <strong>disabled</strong>.':'🔒 Locked meals are auto-filled from willingness.'}
       </div>
       <table style="width:100%;font-size:13px">
-        <thead>
-          <tr>
-            <th style="text-align:left;padding:6px;font-size:11px;letter-spacing:1px;color:var(--text-s)">Member</th>
-            <th style="font-size:11px">🌅 B</th>
-            <th style="font-size:11px">☀️ L</th>
-            <th style="font-size:11px">🌙 D</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="text-align:left;padding:6px;font-size:11px;letter-spacing:1px;color:var(--text-s)">Member</th>
+          <th style="font-size:11px">🌅 B</th><th style="font-size:11px">☀️ L</th><th style="font-size:11px">🌙 D</th>
+        </tr></thead>
         <tbody>${S.members.map(m=>{
-          const ex = todayAtt.find(a=>a.memberId===m.id)||{};
-          // Auto-fill from willingness for locked meals
-          const bWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true');
-          const lWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch`     && String(w.willing)==='true');
-          const dWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner`    && String(w.willing)==='true');
-
-          const bChecked = todayAtt.length > 0 ? String(ex.breakfast)==='true' : (isMealLocked(todayDay,'Breakfast') ? bWilling : false);
-          const lChecked = todayAtt.length > 0 ? String(ex.lunch)==='true'     : (isMealLocked(todayDay,'Lunch')     ? lWilling : false);
-          const dChecked = todayAtt.length > 0 ? String(ex.dinner)==='true'    : (isMealLocked(todayDay,'Dinner')    ? dWilling : false);
-
-          const bHint = !isMealLocked(todayDay,'Breakfast') ? ' title="Not locked yet"' : (bWilling?' title="Willing ✅"':' title="Not willing"');
-          const lHint = !isMealLocked(todayDay,'Lunch')     ? ' title="Not locked yet"' : (lWilling?' title="Willing ✅"':' title="Not willing"');
-          const dHint = !isMealLocked(todayDay,'Dinner')    ? ' title="Not locked yet"' : (dWilling?' title="Willing ✅"':' title="Not willing"');
-
+          const ex=todayAtt.find(a=>a.memberId===m.id)||{};
+          const bW=!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Breakfast`&&String(w.willing)==='true');
+          const lW=!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Lunch`&&String(w.willing)==='true');
+          const dW=!!wAll.find(w=>w.memberId===m.id&&w.dayMeal===`${todayDay}-Dinner`&&String(w.willing)==='true');
+          const bC=todayAtt.length>0?String(ex.breakfast)==='true':(isMealLocked(todayDay,'Breakfast')?bW:false);
+          const lC=todayAtt.length>0?String(ex.lunch)==='true':(isMealLocked(todayDay,'Lunch')?lW:false);
+          const dC=todayAtt.length>0?String(ex.dinner)==='true':(isMealLocked(todayDay,'Dinner')?dW:false);
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:6px 4px;font-size:12px"><strong>${m.rank}</strong> ${m.fname} ${m.lname}</td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-b" ${bChecked?'checked':''}${bHint}></td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-l" ${lChecked?'checked':''}${lHint}></td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-d" ${dChecked?'checked':''}${dHint}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-b" ${bC?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-l" ${lC?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-d" ${dC?'checked':''}></td>
           </tr>`;
         }).join('')}</tbody>
       </table>`;
     openModal('modal-att');
-  } catch(e){showToast('Error loading attendance: '+e.message,true);}
+  } catch(e){showToast('Error: '+e.message,true);}
 }
-
 async function saveAtt() {
-  const dateStr = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
+  const dateStr=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
   const entries=S.members.map(m=>({
     memberId:m.id,
     breakfast:document.getElementById(`at-${m.id}-b`)?.checked||false,
@@ -1179,61 +981,46 @@ async function saveAtt() {
   }));
   try {
     await api('saveAttendance',{date:dateStr,entries,markedBy:S.user.fname});
-    // Flag this date as admin-edited — auto-mark will NOT overwrite it
     markDateAdminEdited(dateStr);
-    closeModal('modal-att');
-    showToast('✅ Attendance saved. Auto-mark disabled for today.');
-    await renderAttendance();
+    closeModal('modal-att'); showToast('✅ Attendance saved. Auto-mark disabled today.'); await renderAttendance();
   } catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  EXPENDITURE
-// ════════════════════════════════════════════════════
+// ════ EXPENDITURE ════
 async function renderExpenditure() {
   const ym=MONTH;
   if(!document.getElementById('e-month').value)document.getElementById('e-month').value=ym;
-  // Pre-populate filter with current month so log is visible on first load
   const sel=document.getElementById('e-filter');
-  if(sel && !sel.value) sel.innerHTML=`<option value="${ym}">${monthName(ym)}</option>`;
-  await loadExp();
-  await renderExpSummary();
+  if(sel&&!sel.value)sel.innerHTML=`<option value="${ym}">${monthName(ym)}</option>`;
+  await loadExp(); await renderExpSummary();
 }
-
 async function loadExp() {
   const filter=document.getElementById('e-filter')?.value||MONTH;
   loading('exp-tbody');
   try {
     const r=await api('getExpenditure',{month:filter});
-    S.expenditure=r.records;
-    updateExpFilter(r.records, filter);
+    S.expenditure=r.records; updateExpFilter(r.records,filter);
     document.getElementById('exp-tbody').innerHTML=r.records.length===0
       ?`<tr><td colspan="6"><div class="empty">No entries for this month.</div></td></tr>`
       :r.records.map(e=>`<tr>
-          <td>${monthName(e.month)}</td>
-          <td><span class="pill pa">${e.category}</span></td>
-          <td>${e.description}</td>
-          <td><strong>Rs.${Number(e.amount).toLocaleString()}</strong></td>
-          <td>${e.addedBy}</td>
-          <td><button class="btn bsm bred" onclick="delExp('${e.id}')">Del</button></td>
+          <td>${monthName(e.month)}</td><td><span class="pill pa">${e.category}</span></td>
+          <td>${e.description}</td><td><strong>Rs.${Number(e.amount).toLocaleString()}</strong></td>
+          <td>${e.addedBy}</td><td><button class="btn bsm bred" onclick="delExp('${e.id}')">Del</button></td>
         </tr>`).join('');
   } catch(e){document.getElementById('exp-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
-
-function updateExpFilter(records, forcedMonth) {
-  const months=[...new Set(records.map(e=>e.month)),...[MONTH]].sort().reverse();
-  const sel=document.getElementById('e-filter'); if(!sel)return;
-  const cur = forcedMonth || sel.value || MONTH;
+function updateExpFilter(records,forcedMonth) {
+  const months=[...new Set(records.map(e=>e.month),...[MONTH])].sort().reverse();
+  const sel=document.getElementById('e-filter');if(!sel)return;
+  const cur=forcedMonth||sel.value||MONTH;
   sel.innerHTML=months.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${monthName(m)}</option>`).join('');
-  sel.value = cur;
+  sel.value=cur;
 }
-
 async function renderExpSummary() {
   const ym=document.getElementById('e-month')?.value||MONTH;
   try {
     const r=await api('getExpenditure',{month:ym});
-    const exp=r.records;
-    const total=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const exp=r.records, total=exp.reduce((a,b)=>a+Number(b.amount),0);
     const attRes=await api('getAttendance',{month:ym});
     const totalMeals=calcTotalMeals(attRes.records);
     const perMeal=totalMeals>0?Math.round(total/totalMeals):0;
@@ -1249,108 +1036,87 @@ async function renderExpSummary() {
       </div>`;
   } catch(e){}
 }
-
 async function addExp() {
-  const month=document.getElementById('e-month').value;
-  const category=document.getElementById('e-cat').value;
-  const description=document.getElementById('e-desc').value.trim();
-  const amount=parseInt(document.getElementById('e-amt').value);
+  const month=document.getElementById('e-month').value, category=document.getElementById('e-cat').value;
+  const description=document.getElementById('e-desc').value.trim(), amount=parseInt(document.getElementById('e-amt').value);
   if(!month||!description||!amount){showToast('Fill all fields',true);return;}
   try {
     await api('addExpenditure',{month,category,description,amount,addedBy:S.user.fname});
     document.getElementById('e-desc').value=''; document.getElementById('e-amt').value='';
     showToast('✅ Expenditure added.');
-    // Set filter to the month just added so it shows in the log immediately
     const sel=document.getElementById('e-filter');
-    if(sel) sel.value = month;
+    if(sel)sel.value=month;
     await loadExp(); await renderExpSummary();
   } catch(e){showToast('Error: '+e.message,true);}
 }
-
 async function delExp(id) {
-  try {
-    await api('deleteExpenditure',{id});
-    showToast('Entry deleted.');
-    await loadExp(); await renderExpSummary();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { await api('deleteExpenditure',{id}); showToast('Entry deleted.'); await loadExp(); await renderExpSummary(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  BILLING
-// ════════════════════════════════════════════════════
-// Stores last billing result for PDF/Excel export
-let _billData = null;
-
+// ════ BILLING ════
 async function calcBilling() {
   const ym=document.getElementById('bill-month')?.value||MONTH;
-  if(!document.getElementById('bill-month').value)document.getElementById('bill-month').value=ym;
+  if(document.getElementById('bill-month')&&!document.getElementById('bill-month').value)
+    document.getElementById('bill-month').value=ym;
   loading('bill-tbody');
-  document.getElementById('bill-header').innerHTML='<div class="loading"><span class="spin"></span> Calculating...</div>';
-  document.getElementById('btn-pdf').style.display='none';
-  document.getElementById('btn-excel').style.display='none';
+  const bh=document.getElementById('bill-header');
+  if(bh)bh.innerHTML='<div class="loading"><span class="spin"></span> Calculating...</div>';
+  // Reset buttons to disabled
+  const pdfBtn=document.getElementById('btn-pdf');
+  const xlBtn=document.getElementById('btn-excel');
+  if(pdfBtn){pdfBtn.disabled=true;pdfBtn.style.opacity='0.5';}
+  if(xlBtn){xlBtn.disabled=true;xlBtn.style.opacity='0.5';}
   try {
     const [attRes,expRes,chgRes]=await Promise.all([
-      api('getAttendance',{month:ym}),
-      api('getExpenditure',{month:ym}),
-      api('getCharges',{month:ym}),
+      api('getAttendance',{month:ym}),api('getExpenditure',{month:ym}),api('getCharges',{month:ym})
     ]);
     const att=attRes.records,exp=expRes.records,chg=chgRes.records;
     const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
     const totalMeals=calcTotalMeals(att);
     const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
-    document.getElementById('bill-header').innerHTML=`
+    if(bh)bh.innerHTML=`
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
         <div class="sc sa" style="margin:0"><div class="sl">Total Expenditure</div><div class="sv">Rs.${(totalExp/1000).toFixed(1)}K</div></div>
         <div class="sc so" style="margin:0"><div class="sl">Total Meals</div><div class="sv">${totalMeals}</div></div>
         <div class="sc sg" style="margin:0"><div class="sl">Per Meal Rate</div><div class="sv">Rs.${perMeal}</div></div>
         <div class="sc sr" style="margin:0"><div class="sl">Members Billed</div><div class="sv">${S.members.length}</div></div>
       </div>`;
-    document.getElementById('bill-tbody').innerHTML=S.members.map(m=>{
+    const rows=S.members.map(m=>{
       const meals=getMemberMeals(att,m.id);
-      const mealCost=meals*perMeal;
-      const custom=getCustomTotal(chg,m.id,ym);
-      const gross=mealCost+custom;
-      const adv=Number(m.advance||6000);
-      const bal=adv-gross;
-      return `<tr>
-        <td><strong>${m.rank}</strong><br><span style="font-size:11px">${m.fname} ${m.lname}</span></td>
-        <td>${meals}</td><td>Rs.${mealCost.toLocaleString()}</td><td>Rs.${custom.toLocaleString()}</td>
-        <td><strong>Rs.${gross.toLocaleString()}</strong></td><td>Rs.${adv.toLocaleString()}</td>
-        <td class="${bal>=0?'credit':'debit'}"><strong>Rs.${Math.abs(bal).toLocaleString()} ${bal>=0?'↑':'↓'}</strong></td>
-        <td><span class="pill ${bal>=0?'pg':'pr'}">${bal>=0?'Surplus':'Due'}</span></td>
-      </tr>`;
-    }).join('');
-    // Store for export and show download buttons
-    const _rows=S.members.map(m=>{
-      const meals=getMemberMeals(att,m.id);
-      const mealCost=meals*perMeal;
-      const custom=getCustomTotal(chg,m.id,ym);
-      const gross=mealCost+custom;
-      const adv=Number(m.advance||6000);
-      const bal=adv-gross;
+      const mealCost=meals*perMeal, custom=getCustomTotal(chg,m.id,ym);
+      const gross=mealCost+custom, adv=Number(m.advance||6000), bal=adv-gross;
       return {rank:m.rank,fname:m.fname,lname:m.lname,meals,mealCost,custom,gross,advance:adv,balance:bal,status:bal>=0?'Surplus':'Due'};
     });
-    _billData={ym,totalExp,totalMeals,perMeal,memberCount:S.members.length,rows:_rows};
-    document.getElementById('btn-pdf').style.display='';
-    document.getElementById('btn-excel').style.display='';
-  } catch(e){document.getElementById('bill-tbody').innerHTML=`<tr><td colspan="8"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+    const bt=document.getElementById('bill-tbody');
+    if(bt)bt.innerHTML=rows.map(r=>`<tr>
+      <td><strong>${r.rank}</strong><br><span style="font-size:11px">${r.fname} ${r.lname}</span></td>
+      <td>${r.meals}</td><td>Rs.${r.mealCost.toLocaleString()}</td><td>Rs.${r.custom.toLocaleString()}</td>
+      <td><strong>Rs.${r.gross.toLocaleString()}</strong></td><td>Rs.${r.advance.toLocaleString()}</td>
+      <td class="${r.balance>=0?'credit':'debit'}"><strong>Rs.${Math.abs(r.balance).toLocaleString()} ${r.balance>=0?'↑':'↓'}</strong></td>
+      <td><span class="pill ${r.balance>=0?'pg':'pr'}">${r.status}</span></td>
+    </tr>`).join('');
+    _billData={ym,totalExp,totalMeals,perMeal,memberCount:S.members.length,rows};
+    // Enable download buttons
+    if(pdfBtn){pdfBtn.disabled=false;pdfBtn.style.opacity='1';}
+    if(xlBtn){xlBtn.disabled=false;xlBtn.style.opacity='1';}
+  } catch(e){
+    const bt=document.getElementById('bill-tbody');
+    if(bt)bt.innerHTML=`<tr><td colspan="8"><div class="empty">Error: ${e.message}</div></td></tr>`;
+    showToast('Billing error: '+e.message,true);
+  }
 }
 
-// ════════════════════════════════════════════════════
-//  CUSTOM CHARGES
-// ════════════════════════════════════════════════════
+// ════ CUSTOM CHARGES ════
 function populateMemberSelect() {
-  const sel=document.getElementById('cc-target'); if(!sel)return;
+  const sel=document.getElementById('cc-target');if(!sel)return;
   sel.innerHTML=`<option value="all">All Members</option>`+S.members.map(m=>`<option value="${m.id}">${m.rank} ${m.fname} ${m.lname}</option>`).join('');
 }
-
 async function renderCharges() {
   if(!document.getElementById('cc-month').value)document.getElementById('cc-month').value=MONTH;
-  populateMemberSelect();
-  loading('cc-tbody');
+  populateMemberSelect(); loading('cc-tbody');
   try {
-    const r=await api('getCharges',{month:MONTH});
-    S.charges=r.records;
+    const r=await api('getCharges',{month:MONTH}); S.charges=r.records;
     document.getElementById('cc-tbody').innerHTML=r.records.length===0
       ?`<tr><td colspan="5"><div class="empty">No custom charges.</div></td></tr>`
       :r.records.map(c=>{
@@ -1360,41 +1126,27 @@ async function renderCharges() {
         }).join('');
   } catch(e){document.getElementById('cc-tbody').innerHTML=`<tr><td colspan="5"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
-
 async function addCharge() {
-  const month=document.getElementById('cc-month').value;
-  const name=document.getElementById('cc-name').value.trim();
-  const memberId=document.getElementById('cc-target').value;
-  const amount=parseInt(document.getElementById('cc-amt').value);
+  const month=document.getElementById('cc-month').value, name=document.getElementById('cc-name').value.trim();
+  const memberId=document.getElementById('cc-target').value, amount=parseInt(document.getElementById('cc-amt').value);
   const notes=document.getElementById('cc-notes').value.trim();
   if(!month||!name||!amount){showToast('Fill all required fields',true);return;}
   try {
     await api('addCharge',{month,name,memberId,amount,notes});
     document.getElementById('cc-name').value=''; document.getElementById('cc-amt').value=''; document.getElementById('cc-notes').value='';
-    showToast('✅ Charge added.');
-    await renderCharges();
+    showToast('✅ Charge added.'); await renderCharges();
   } catch(e){showToast('Error: '+e.message,true);}
 }
-
 async function delCharge(id) {
-  try {
-    await api('deleteCharge',{id});
-    showToast('Charge removed.');
-    await renderCharges();
-  } catch(e){showToast('Error: '+e.message,true);}
+  try { await api('deleteCharge',{id}); showToast('Charge removed.'); await renderCharges(); }
+  catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  REPORTS
-// ════════════════════════════════════════════════════
+// ════ REPORTS ════
 async function renderReports() {
   loading('top-c'); loading('adv-ov');
   try {
-    const [attRes,expRes,chgRes]=await Promise.all([
-      api('getAttendance',{month:MONTH}),
-      api('getExpenditure',{month:MONTH}),
-      api('getCharges',{month:MONTH}),
-    ]);
+    const [attRes,expRes,chgRes]=await Promise.all([api('getAttendance',{month:MONTH}),api('getExpenditure',{month:MONTH}),api('getCharges',{month:MONTH})]);
     const att=attRes.records,exp=expRes.records,chg=chgRes.records;
     const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
     const totalMeals=calcTotalMeals(att);
@@ -1417,8 +1169,7 @@ async function renderReports() {
       </div>`).join('');
     document.getElementById('adv-ov').innerHTML=S.members.map(m=>{
       const cost=getMemberMeals(att,m.id)*perMeal+getCustomTotal(chg,m.id,MONTH);
-      const adv=Number(m.advance||6000);
-      const bal=adv-cost;
+      const adv=Number(m.advance||6000), bal=adv-cost;
       const pct=Math.min(100,Math.round(cost/adv*100));
       return `<div style="margin-bottom:11px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
@@ -1431,23 +1182,21 @@ async function renderReports() {
   } catch(e){showToast('Error: '+e.message,true);}
 }
 
-// ════════════════════════════════════════════════════
-//  BILLING DOWNLOAD — PDF & EXCEL
-// ════════════════════════════════════════════════════
+// ════ DOWNLOAD PDF & EXCEL ════
 function downloadBillPDF() {
-  if (!_billData) { showToast('Calculate billing first.', true); return; }
+  if(!_billData){showToast('Calculate billing first.',true);return;}
   const {ym,totalExp,totalMeals,perMeal,memberCount,rows}=_billData;
   const genDate=new Date().toLocaleDateString('en-GB',{timeZone:'Asia/Karachi',day:'2-digit',month:'short',year:'numeric'});
   const trs=rows.map(r=>`<tr>
-      <td>${r.rank}<br><span class="nm">${r.fname} ${r.lname}</span></td>
-      <td style="text-align:center">${r.meals}</td>
-      <td style="text-align:right">Rs.${r.mealCost.toLocaleString()}</td>
-      <td style="text-align:right">Rs.${r.custom.toLocaleString()}</td>
-      <td style="text-align:right"><strong>Rs.${r.gross.toLocaleString()}</strong></td>
-      <td style="text-align:right">Rs.${r.advance.toLocaleString()}</td>
-      <td style="text-align:right;color:${r.balance>=0?'#1e8449':'#c0392b'}"><strong>Rs.${Math.abs(r.balance).toLocaleString()} ${r.balance>=0?'CR':'DR'}</strong></td>
-      <td style="text-align:center"><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-weight:bold;background:${r.balance>=0?'#d5f5e3':'#fadbd8'};color:${r.balance>=0?'#1e8449':'#922b21'}">${r.status}</span></td>
-    </tr>`).join('');
+    <td>${r.rank}<br><span class="nm">${r.fname} ${r.lname}</span></td>
+    <td style="text-align:center">${r.meals}</td>
+    <td style="text-align:right">Rs.${r.mealCost.toLocaleString()}</td>
+    <td style="text-align:right">Rs.${r.custom.toLocaleString()}</td>
+    <td style="text-align:right"><strong>Rs.${r.gross.toLocaleString()}</strong></td>
+    <td style="text-align:right">Rs.${r.advance.toLocaleString()}</td>
+    <td style="text-align:right;color:${r.balance>=0?'#1e8449':'#c0392b'}"><strong>Rs.${Math.abs(r.balance).toLocaleString()} ${r.balance>=0?'CR':'DR'}</strong></td>
+    <td style="text-align:center"><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-weight:bold;background:${r.balance>=0?'#d5f5e3':'#fadbd8'};color:${r.balance>=0?'#1e8449':'#922b21'}">${r.status}</span></td>
+  </tr>`).join('');
   const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Mess Bill ${monthName(ym)}</title>
 <style>
 @page{size:A4 landscape;margin:12mm}
@@ -1489,7 +1238,7 @@ tr:nth-child(even) td{background:#fafaf8}
 }
 
 function downloadBillExcel() {
-  if (!_billData) { showToast('Calculate billing first.', true); return; }
+  if(!_billData){showToast('Calculate billing first.',true);return;}
   const {ym,totalExp,totalMeals,perMeal,memberCount,rows}=_billData;
   const genDate=new Date().toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'});
   const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
