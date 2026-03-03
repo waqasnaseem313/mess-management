@@ -119,6 +119,9 @@ tbody td{padding:10px 13px;color:var(--text-m);vertical-align:middle;}
 .mslots{padding:10px;display:flex;flex-direction:column;gap:7px;}
 .mslot{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:3px;background:var(--cream);border:1.5px solid transparent;transition:all .15s;}
 .mslot.on{border-color:var(--army);background:rgba(45,74,30,.07);}
+.mslot.locked{opacity:0.55;cursor:not-allowed;background:#f0f0f0;}
+.mslot.locked .tog{pointer-events:none;cursor:not-allowed;}
+.lock-badge{font-size:10px;color:#888;margin-left:4px;}
 .mname{font-size:12.5px;font-weight:500;}
 .mtime{font-size:10px;color:var(--text-s);}
 .tog{width:34px;height:19px;border-radius:9px;border:none;background:var(--border);position:relative;transition:background .2s;cursor:pointer;flex-shrink:0;}
@@ -342,12 +345,16 @@ async function renderMealPlan() {
 
     <!-- MEAL WILLINGNESS -->
     <div class="page" id="page-meals">
-      <div class="alert ai" style="margin-bottom:16px">Mark your meal preferences for each day. Deadline: 10:00 PM daily. Changes apply from next meal.</div>
+      <div id="meals-cutoff-banner" class="alert aw" style="margin-bottom:12px;display:none"></div>
+      <div class="alert ai" style="margin-bottom:16px">
+        ⏰ <strong>Cutoff times:</strong> Breakfast by <strong>7:00 AM</strong> &nbsp;|&nbsp; Lunch by <strong>9:00 AM</strong> &nbsp;|&nbsp; Dinner by <strong>3:00 PM</strong><br>
+        After cutoff, that meal is locked and auto-marked as attendance.
+      </div>
       <div class="card" style="margin-bottom:14px">
         <div class="ctitle">📅 Weekly Meal Preferences</div>
         <div class="mgrid" id="mgrid"></div>
       </div>
-      <div style="text-align:right"><button class="btn barmy" onclick="saveMeals()">💾 Save Preferences</button></div>
+      <div style="text-align:right"><button class="btn barmy" id="btn-save-meals" onclick="saveMeals()">💾 Save Preferences</button></div>
     </div>
 
     <!-- MY BILL -->
@@ -384,7 +391,12 @@ async function renderMealPlan() {
     <!-- ATTENDANCE -->
     <div class="page" id="page-attendance">
       <div class="card" style="margin-bottom:14px">
-        <div class="shead"><h2 id="att-title">Attendance</h2><button class="btn barmy" onclick="openAttModal()">✅ Mark Today</button></div>
+        <div class="shead"><h2 id="att-title">Attendance</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn bout" onclick="runAutoMark()" title="Auto-fill today from willingness">⚡ Auto-Mark</button>
+            <button class="btn barmy" onclick="openAttModal()">✏️ Edit Today</button>
+          </div>
+        </div>
         <div class="sgrid" id="att-stats" style="margin-bottom:0"></div>
       </div>
       <div class="card">
@@ -759,6 +771,32 @@ async function renderDash() {
 // ════════════════════════════════════════════════════
 //  MEAL WILLINGNESS
 // ════════════════════════════════════════════════════
+// ── Cutoff times PKT: Breakfast 7AM, Lunch 9AM, Dinner 3PM ──
+const MEAL_CUTOFFS = {Breakfast:7, Lunch:9, Dinner:15};
+
+function getPKTHour() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset()*60000;
+  const pkt = new Date(utc + 5*3600000);
+  return pkt.getHours() + pkt.getMinutes()/60;
+}
+
+function getTodayDayAbbr() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset()*60000;
+  const pkt = new Date(utc + 5*3600000);
+  return DAYS[(pkt.getDay()+6)%7];
+}
+
+function isMealLocked(day, meal) {
+  const todayDay = getTodayDayAbbr();
+  const todayIdx = DAYS.indexOf(todayDay);
+  const dayIdx   = DAYS.indexOf(day);
+  if (dayIdx < todayIdx) return true;
+  if (dayIdx > todayIdx) return false;
+  return getPKTHour() >= MEAL_CUTOFFS[meal];
+}
+
 async function renderMeals() {
   const u=S.user;
   document.getElementById('mgrid').innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';
@@ -767,15 +805,27 @@ async function renderMeals() {
     const prefs={};
     r.records.forEach(rec=>{prefs[rec.dayMeal]=String(rec.willing)==='true';});
     S.mealWillingness[u.id]=prefs;
+    const todayDay=getTodayDayAbbr();
+    const lockedToday=MEALS.filter(m=>isMealLocked(todayDay,m));
+    const banner=document.getElementById('meals-cutoff-banner');
+    if(lockedToday.length>0){
+      banner.style.display='block';
+      banner.innerHTML=`⏰ Today's <strong>${lockedToday.join(', ')}</strong> preference${lockedToday.length>1?'s are':' is'} locked and auto-marked as attendance.`;
+    } else { banner.style.display='none'; }
     document.getElementById('mgrid').innerHTML=DAYS.map(day=>`
       <div class="mday">
-        <div class="mdayh">${day}</div>
+        <div class="mdayh">${day}${day===todayDay?' <span style="font-size:10px;opacity:0.8">(Today)</span>':''}</div>
         <div class="mslots">
           ${MEALS.map(meal=>{
-            const key=`${day}-${meal}`,on=!!prefs[key];
-            return `<div class="mslot ${on?'on':''}" id="slot-${day}-${meal}">
-              <div><div class="mname">${MEAL_ICONS[meal]} ${meal}</div><div class="mtime">${MEAL_TIMES[meal]}</div></div>
-              <button class="tog ${on?'on':''}" id="tog-${day}-${meal}" onclick="toggleMeal('${day}','${meal}')"></button>
+            const key=`${day}-${meal}`,on=!!prefs[key],locked=isMealLocked(day,meal);
+            return `<div class="mslot ${on?'on':''} ${locked?'locked':''}" id="slot-${day}-${meal}">
+              <div>
+                <div class="mname">${MEAL_ICONS[meal]} ${meal}${locked?' 🔒':''}</div>
+                <div class="mtime">${MEAL_TIMES[meal]}</div>
+              </div>
+              <button class="tog ${on?'on':''}" id="tog-${day}-${meal}"
+                onclick="toggleMeal('${day}','${meal}')">
+              </button>
             </div>`;
           }).join('')}
         </div>
@@ -784,6 +834,7 @@ async function renderMeals() {
 }
 
 function toggleMeal(day,meal) {
+  if(isMealLocked(day,meal)){showToast('⏰ Cutoff passed — this meal is locked.',true);return;}
   const u=S.user;
   if(!S.mealWillingness[u.id])S.mealWillingness[u.id]={};
   const key=`${day}-${meal}`;
@@ -798,7 +849,7 @@ async function saveMeals() {
   const prefs=S.mealWillingness[u.id]||{};
   try {
     await api('saveMealWillingness',{memberId:u.id,preferences:prefs});
-    showToast('✅ Meal preferences saved!');
+    showToast('✅ Preferences saved!');
   } catch(e){showToast('Error: '+e.message,true);}
 }
 
@@ -1000,21 +1051,94 @@ async function renderAttendance() {
   } catch(e){document.getElementById('att-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
 
-async function openAttModal() {
-  const dateStr=TODAY.toISOString().split('T')[0];
+// ── Auto-mark attendance from willingness after cutoff ──
+async function autoMarkFromWillingness() {
+  try {
+    const todayDay = getTodayDayAbbr();
+    const dateStr  = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
+    const [attRes, wRes] = await Promise.all([
+      api('getAttendance',{month:MONTH}),
+      api('getMealWillingness',{})
+    ]);
+    const todayAtt = attRes.records.filter(a=>String(a.date).startsWith(dateStr));
+    const wAll     = wRes.records || [];
+
+    const entries = S.members.map(m => {
+      const ex = todayAtt.find(a=>a.memberId===m.id)||{};
+      // For each meal: if past cutoff, use willingness; else use existing attendance
+      const breakfast = isMealLocked(todayDay,'Breakfast')
+        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true')
+        : String(ex.breakfast)==='true';
+      const lunch = isMealLocked(todayDay,'Lunch')
+        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch` && String(w.willing)==='true')
+        : String(ex.lunch)==='true';
+      const dinner = isMealLocked(todayDay,'Dinner')
+        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner` && String(w.willing)==='true')
+        : String(ex.dinner)==='true';
+      return {memberId:m.id, breakfast, lunch, dinner};
+    });
+
+    await api('saveAttendance',{date:dateStr,entries,markedBy:'AutoMark'});
+    return {entries, dateStr};
+  } catch(e) { console.error('Auto-mark error:',e); return null; }
+}
+
+async function runAutoMark() {
+  showToast('⚡ Auto-marking from willingness...');
+  const result = await autoMarkFromWillingness();
+  if(result) {
+    showToast('✅ Attendance auto-marked from meal willingness!');
+    await renderAttendance();
+  } else {
+    showToast('❌ Auto-mark failed. Check console.',true);
+  }
+}
+
+async function openAttModal(dateOverride) {
+  const dateStr = dateOverride || new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
   document.getElementById('att-date-lbl').textContent=`Date: ${dateStr}`;
   try {
-    const r=await api('getAttendance',{month:MONTH});
-    const todayAtt=r.records.filter(a=>String(a.date).startsWith(dateStr));
+    const [attRes, wRes] = await Promise.all([
+      api('getAttendance',{month:MONTH}),
+      api('getMealWillingness',{})
+    ]);
+    const todayAtt = attRes.records.filter(a=>String(a.date).startsWith(dateStr));
+    const wAll     = wRes.records || [];
+    const todayDay = getTodayDayAbbr();
+
     document.getElementById('att-modal-c').innerHTML=`
+      <div style="font-size:11px;color:var(--text-s);margin-bottom:10px;background:#f5f5e8;padding:8px;border-radius:4px">
+        🔒 Locked meals are auto-filled from willingness. Admin can override any checkbox.
+      </div>
       <table style="width:100%;font-size:13px">
-        <thead><tr><th style="text-align:left;padding:6px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-s)">Member</th><th>🌅</th><th>☀️</th><th>🌙</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:6px;font-size:11px;letter-spacing:1px;color:var(--text-s)">Member</th>
+            <th style="font-size:11px">🌅 B</th>
+            <th style="font-size:11px">☀️ L</th>
+            <th style="font-size:11px">🌙 D</th>
+          </tr>
+        </thead>
         <tbody>${S.members.map(m=>{
-          const ex=todayAtt.find(a=>a.memberId===m.id)||{};
-          return `<tr><td style="padding:6px 0;font-size:12.5px">${m.rank} ${m.fname} ${m.lname}</td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-b" ${String(ex.breakfast)==='true'?'checked':''}></td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-l" ${String(ex.lunch)==='true'?'checked':''}></td>
-            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-d" ${String(ex.dinner)==='true'?'checked':''}></td>
+          const ex = todayAtt.find(a=>a.memberId===m.id)||{};
+          // Auto-fill from willingness for locked meals
+          const bWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true');
+          const lWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch`     && String(w.willing)==='true');
+          const dWilling = !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner`    && String(w.willing)==='true');
+
+          const bChecked = todayAtt.length > 0 ? String(ex.breakfast)==='true' : (isMealLocked(todayDay,'Breakfast') ? bWilling : false);
+          const lChecked = todayAtt.length > 0 ? String(ex.lunch)==='true'     : (isMealLocked(todayDay,'Lunch')     ? lWilling : false);
+          const dChecked = todayAtt.length > 0 ? String(ex.dinner)==='true'    : (isMealLocked(todayDay,'Dinner')    ? dWilling : false);
+
+          const bHint = !isMealLocked(todayDay,'Breakfast') ? ' title="Not locked yet"' : (bWilling?' title="Willing ✅"':' title="Not willing"');
+          const lHint = !isMealLocked(todayDay,'Lunch')     ? ' title="Not locked yet"' : (lWilling?' title="Willing ✅"':' title="Not willing"');
+          const dHint = !isMealLocked(todayDay,'Dinner')    ? ' title="Not locked yet"' : (dWilling?' title="Willing ✅"':' title="Not willing"');
+
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 4px;font-size:12px"><strong>${m.rank}</strong> ${m.fname} ${m.lname}</td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-b" ${bChecked?'checked':''}${bHint}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-l" ${lChecked?'checked':''}${lHint}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-d" ${dChecked?'checked':''}${dHint}></td>
           </tr>`;
         }).join('')}</tbody>
       </table>`;
