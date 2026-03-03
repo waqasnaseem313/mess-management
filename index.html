@@ -645,7 +645,7 @@ async function bootApp() {
   // Preload data
   try {
     const [mRes] = await Promise.all([api('getMembers')]);
-    S.members = mRes.members;
+    S.members = Object.values((mRes.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
     if(u.role==='admin'){
       const rRes = await api('getRequests');
       S.requests = rRes.requests;
@@ -943,22 +943,29 @@ async function renderRequests() {
           <td><strong>${r.fname} ${r.lname}</strong></td><td>${r.rank}</td><td>${r.svc}</td><td>${r.email}</td>
           <td>${String(r.appliedAt).substring(0,10)}</td>
           <td><div class="brow">
-            <button class="btn bsm bgreen" onclick="approveReq('${r.id}')">✔ Approve</button>
+            <button class="btn bsm bgreen" id="appbtn-${r.id}" onclick="approveReq('${r.id}', this)">✔ Approve</button>
             <button class="btn bsm bred" onclick="rejectReq('${r.id}')">✘ Reject</button>
           </div></td>
         </tr>`).join('');
   } catch(e){document.getElementById('req-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
 
-async function approveReq(id) {
+const _approvingIds = new Set();
+async function approveReq(id, btn) {
+  if(_approvingIds.has(id)){showToast('⚠️ Already processing, please wait...',true);return;}
+  _approvingIds.add(id);
+  if(btn){btn.disabled=true;btn.textContent='...';}
   try {
-    await api('approveRequest',{requestId:id});
+    const res=await api('approveRequest',{requestId:id});
+    if(res && res.success===false){showToast('⚠️ '+res.error,true);return;}
     const req=S.requests.find(r=>r.id===id);
-    showToast(`✅ ${req?.rank} ${req?.fname} ${req?.lname} approved.`);
-    const mRes=await api('getMembers'); S.members=mRes.members;
+    showToast(`✅ ${req?.fname} ${req?.lname} approved.`);
+    const mRes=await api('getMembers');
+    S.members=Object.values((mRes.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
     await renderRequests();
     populateMemberSelect();
   } catch(e){showToast('Error: '+e.message,true);}
+  finally{_approvingIds.delete(id);}
 }
 
 async function rejectReq(id) {
@@ -975,7 +982,7 @@ async function rejectReq(id) {
 async function renderMembers() {
   loading('mem-tbody');
   try {
-    const r=await api('getMembers'); S.members=r.members;
+    const r=await api('getMembers'); S.members=Object.values((r.members||[]).reduce((a,m)=>{if(m.id)a[m.id]=m;return a},{}));
     document.getElementById('mem-tbody').innerHTML=S.members.map(m=>`<tr>
       <td><strong>${m.rank}</strong><br><span style="font-size:11px">${m.fname} ${m.lname}</span></td>
       <td>${m.svc}</td><td>${m.email}</td><td>Rs.${Number(m.advance||6000).toLocaleString()}</td>
