@@ -431,6 +431,8 @@ async function renderMealPlan() {
         <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px">
           <div class="fg" style="margin:0;flex:1;max-width:220px"><label>Select Month</label><input type="month" id="bill-month" onchange="calcBilling()"/></div>
           <button class="btn barmy" onclick="calcBilling()">⟳ Recalculate</button>
+          <button class="btn bout" id="btn-pdf" onclick="downloadBillPDF()" style="display:none">📄 PDF</button>
+          <button class="btn bout" id="btn-excel" onclick="downloadBillExcel()" style="display:none">📊 Excel</button>
         </div>
         <div id="bill-header"></div>
       </div>
@@ -1276,11 +1278,16 @@ async function delExp(id) {
 // ════════════════════════════════════════════════════
 //  BILLING
 // ════════════════════════════════════════════════════
+// Stores last billing result for PDF/Excel export
+let _billData = null;
+
 async function calcBilling() {
   const ym=document.getElementById('bill-month')?.value||MONTH;
   if(!document.getElementById('bill-month').value)document.getElementById('bill-month').value=ym;
   loading('bill-tbody');
   document.getElementById('bill-header').innerHTML='<div class="loading"><span class="spin"></span> Calculating...</div>';
+  document.getElementById('btn-pdf').style.display='none';
+  document.getElementById('btn-excel').style.display='none';
   try {
     const [attRes,expRes,chgRes]=await Promise.all([
       api('getAttendance',{month:ym}),
@@ -1313,6 +1320,19 @@ async function calcBilling() {
         <td><span class="pill ${bal>=0?'pg':'pr'}">${bal>=0?'Surplus':'Due'}</span></td>
       </tr>`;
     }).join('');
+    // Store for export and show download buttons
+    const _rows=S.members.map(m=>{
+      const meals=getMemberMeals(att,m.id);
+      const mealCost=meals*perMeal;
+      const custom=getCustomTotal(chg,m.id,ym);
+      const gross=mealCost+custom;
+      const adv=Number(m.advance||6000);
+      const bal=adv-gross;
+      return {rank:m.rank,fname:m.fname,lname:m.lname,meals,mealCost,custom,gross,advance:adv,balance:bal,status:bal>=0?'Surplus':'Due'};
+    });
+    _billData={ym,totalExp,totalMeals,perMeal,memberCount:S.members.length,rows:_rows};
+    document.getElementById('btn-pdf').style.display='';
+    document.getElementById('btn-excel').style.display='';
   } catch(e){document.getElementById('bill-tbody').innerHTML=`<tr><td colspan="8"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
 
@@ -1409,6 +1429,89 @@ async function renderReports() {
       </div>`;
     }).join('');
   } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  BILLING DOWNLOAD — PDF & EXCEL
+// ════════════════════════════════════════════════════
+function downloadBillPDF() {
+  if (!_billData) { showToast('Calculate billing first.', true); return; }
+  const {ym,totalExp,totalMeals,perMeal,memberCount,rows}=_billData;
+  const genDate=new Date().toLocaleDateString('en-GB',{timeZone:'Asia/Karachi',day:'2-digit',month:'short',year:'numeric'});
+  const trs=rows.map(r=>`<tr>
+      <td>${r.rank}<br><span class="nm">${r.fname} ${r.lname}</span></td>
+      <td style="text-align:center">${r.meals}</td>
+      <td style="text-align:right">Rs.${r.mealCost.toLocaleString()}</td>
+      <td style="text-align:right">Rs.${r.custom.toLocaleString()}</td>
+      <td style="text-align:right"><strong>Rs.${r.gross.toLocaleString()}</strong></td>
+      <td style="text-align:right">Rs.${r.advance.toLocaleString()}</td>
+      <td style="text-align:right;color:${r.balance>=0?'#1e8449':'#c0392b'}"><strong>Rs.${Math.abs(r.balance).toLocaleString()} ${r.balance>=0?'CR':'DR'}</strong></td>
+      <td style="text-align:center"><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-weight:bold;background:${r.balance>=0?'#d5f5e3':'#fadbd8'};color:${r.balance>=0?'#1e8449':'#922b21'}">${r.status}</span></td>
+    </tr>`).join('');
+  const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Mess Bill ${monthName(ym)}</title>
+<style>
+@page{size:A4 landscape;margin:12mm}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:11.5px;color:#1a1a1a}
+.hdr{text-align:center;padding-bottom:10px;margin-bottom:14px;border-bottom:3px solid #2D4A1E}
+.hdr h1{font-size:18px;color:#2D4A1E;margin-bottom:3px}
+.hdr p{font-size:11px;color:#666}
+.sum{display:flex;gap:12px;margin-bottom:14px}
+.sc{flex:1;background:#f5f0e8;border-left:4px solid #2D4A1E;padding:8px 12px;border-radius:3px}
+.lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px}
+.val{font-size:16px;font-weight:bold;color:#2D4A1E;margin-top:2px}
+table{width:100%;border-collapse:collapse}
+thead th{background:#2D4A1E;color:#e2c06a;padding:7px 8px;text-align:left;font-size:10px;letter-spacing:.5px}
+td{padding:6px 8px;border-bottom:1px solid #ebebeb;vertical-align:middle}
+tr:nth-child(even) td{background:#fafaf8}
+.nm{font-size:10px;color:#666}
+.ftr{margin-top:16px;text-align:center;font-size:9px;color:#bbb}
+</style></head><body>
+<div class="hdr"><h1>Officers Mess Management System</h1>
+<p>Monthly Bill Statement &mdash; <strong>${monthName(ym)}</strong> &nbsp;|&nbsp; Generated: ${genDate}</p></div>
+<div class="sum">
+<div class="sc"><div class="lbl">Total Expenditure</div><div class="val">Rs.${totalExp.toLocaleString()}</div></div>
+<div class="sc"><div class="lbl">Total Meals Served</div><div class="val">${totalMeals}</div></div>
+<div class="sc"><div class="lbl">Per Meal Rate</div><div class="val">Rs.${perMeal.toLocaleString()}</div></div>
+<div class="sc"><div class="lbl">Members Billed</div><div class="val">${memberCount}</div></div>
+</div>
+<table><thead><tr>
+<th>Member</th><th style="text-align:center">Meals</th><th style="text-align:right">Meal Cost</th>
+<th style="text-align:right">Custom</th><th style="text-align:right">Gross Total</th>
+<th style="text-align:right">Advance</th><th style="text-align:right">Balance</th><th style="text-align:center">Status</th>
+</tr></thead><tbody>${trs}</tbody></table>
+<div class="ftr">Officers Mess Management System &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; ${monthName(ym)}</div>
+</body></html>`;
+  const win=window.open('','_blank');
+  if(!win){showToast('Allow popups to open PDF',true);return;}
+  win.document.write(doc);win.document.close();win.focus();
+  setTimeout(()=>{win.print();},700);
+}
+
+function downloadBillExcel() {
+  if (!_billData) { showToast('Calculate billing first.', true); return; }
+  const {ym,totalExp,totalMeals,perMeal,memberCount,rows}=_billData;
+  const genDate=new Date().toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'});
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[
+    q('Officers Mess - Monthly Bill Statement'),
+    q('Month')+','+q(monthName(ym))+','+q('Generated')+','+q(genDate),
+    '','SUMMARY',
+    'Total Expenditure (Rs),'+totalExp,
+    'Total Meals Served,'+totalMeals,
+    'Per Meal Rate (Rs),'+perMeal,
+    'Members Billed,'+memberCount,
+    '',
+    [q('Member'),q('Rank'),q('Meals'),q('Meal Cost (Rs)'),q('Custom Charges (Rs)'),q('Gross Total (Rs)'),q('Advance (Rs)'),q('Balance (Rs)'),q('Status')].join(','),
+  ];
+  rows.forEach(r=>lines.push([q(r.fname+' '+r.lname),q(r.rank),r.meals,r.mealCost,r.custom,r.gross,r.advance,r.balance,q(r.status)].join(',')));
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='MessBill_'+ym+'.csv';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('Excel file downloaded!');
 }
 </script>
 </body>
