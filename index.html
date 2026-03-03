@@ -1191,6 +1191,9 @@ async function saveAtt() {
 async function renderExpenditure() {
   const ym=MONTH;
   if(!document.getElementById('e-month').value)document.getElementById('e-month').value=ym;
+  // Pre-populate filter with current month so log is visible on first load
+  const sel=document.getElementById('e-filter');
+  if(sel && !sel.value) sel.innerHTML=`<option value="${ym}">${monthName(ym)}</option>`;
   await loadExp();
   await renderExpSummary();
 }
@@ -1254,6 +1257,9 @@ async function addExp() {
     await api('addExpenditure',{month,category,description,amount,addedBy:S.user.fname});
     document.getElementById('e-desc').value=''; document.getElementById('e-amt').value='';
     showToast('✅ Expenditure added.');
+    // Sync filter to the month just added so it appears in the log immediately
+    const sel=document.getElementById('e-filter');
+    if(sel) { const opt=sel.querySelector(`option[value="${month}"]`); if(opt) opt.selected=true; else { sel.innerHTML+=`<option value="${month}" selected>${monthName(month)}</option>`; } }
     await loadExp(); await renderExpSummary();
   } catch(e){showToast('Error: '+e.message,true);}
 }
