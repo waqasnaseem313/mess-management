@@ -1060,11 +1060,11 @@ async function renderAttendance() {
 
 // ── Auto-mark attendance from willingness after cutoff ──
 // Admin-edited dates are stored here so auto-mark never overwrites them
-const ADMIN_EDITED_DATES = new Set(JSON.parse(localStorage.getItem('adminEditedDates')||'[]'));
+const ADMIN_EDITED_DATES = new Set(); // in-memory only, resets each session
 
 function markDateAdminEdited(dateStr) {
   ADMIN_EDITED_DATES.add(dateStr);
-  try { localStorage.setItem('adminEditedDates', JSON.stringify([...ADMIN_EDITED_DATES])); } catch(e){}
+  // stored in memory only
 }
 
 async function autoMarkFromWillingness() {
@@ -1204,7 +1204,7 @@ async function loadExp() {
   try {
     const r=await api('getExpenditure',{month:filter});
     S.expenditure=r.records;
-    updateExpFilter(r.records);
+    updateExpFilter(r.records, filter);
     document.getElementById('exp-tbody').innerHTML=r.records.length===0
       ?`<tr><td colspan="6"><div class="empty">No entries for this month.</div></td></tr>`
       :r.records.map(e=>`<tr>
@@ -1218,11 +1218,12 @@ async function loadExp() {
   } catch(e){document.getElementById('exp-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
 }
 
-function updateExpFilter(records) {
+function updateExpFilter(records, forcedMonth) {
   const months=[...new Set(records.map(e=>e.month)),...[MONTH]].sort().reverse();
   const sel=document.getElementById('e-filter'); if(!sel)return;
-  const cur=sel.value;
+  const cur = forcedMonth || sel.value || MONTH;
   sel.innerHTML=months.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${monthName(m)}</option>`).join('');
+  sel.value = cur;
 }
 
 async function renderExpSummary() {
@@ -1257,9 +1258,9 @@ async function addExp() {
     await api('addExpenditure',{month,category,description,amount,addedBy:S.user.fname});
     document.getElementById('e-desc').value=''; document.getElementById('e-amt').value='';
     showToast('✅ Expenditure added.');
-    // Sync filter to the month just added so it appears in the log immediately
+    // Set filter to the month just added so it shows in the log immediately
     const sel=document.getElementById('e-filter');
-    if(sel) { const opt=sel.querySelector(`option[value="${month}"]`); if(opt) opt.selected=true; else { sel.innerHTML+=`<option value="${month}" selected>${monthName(month)}</option>`; } }
+    if(sel) sel.value = month;
     await loadExp(); await renderExpSummary();
   } catch(e){showToast('Error: '+e.message,true);}
 }
