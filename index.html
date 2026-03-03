@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Officers Mess Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --army:#2D4A1E;--army-l:#3D6429;--gold:#C9A84C;--gold-l:#E2C06A;
+  --cream:#F5F0E8;--cream-d:#EDE6D6;--paper:#FAF7F2;
+  --text:#1A2510;--text-m:#3A4A2A;--text-s:#6B7A5A;
+  --border:rgba(45,74,30,0.15);--shadow:rgba(45,74,30,0.12);
+  --red:#C0392B;--green:#27AE60;--warn:#E67E22;--blue:#2980B9;
+  --sw:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans',sans-serif;background:var(--paper);color:var(--text);min-height:100vh;}
+h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.3px;}
+button{cursor:pointer;font-family:'Noto Sans',sans-serif;}
+input,select,textarea{font-family:'Noto Sans',sans-serif;}
+
+/* AUTH */
+#auth{min-height:100vh;background:linear-gradient(160deg,#1A2510,#2D4A1E 50%,#1F3414);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+#auth::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(201,168,76,.04) 40px,rgba(201,168,76,.04) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(201,168,76,.04) 40px,rgba(201,168,76,.04) 41px);}
+.acard{background:var(--paper);border-radius:4px;padding:40px;width:430px;max-width:95vw;border-top:4px solid var(--gold);box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;animation:cardIn .5s cubic-bezier(.34,1.3,.64,1) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.alogo{text-align:center;margin-bottom:24px;}
+.alogo .crest{font-size:44px;margin-bottom:6px;}
+.alogo h2{font-size:21px;color:var(--army);letter-spacing:2px;text-transform:uppercase;}
+.alogo p{font-size:10px;color:var(--text-s);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.atabs{display:flex;background:var(--cream-d);border-radius:4px;padding:4px;margin-bottom:20px;gap:4px;}
+.atab{flex:1;padding:9px;border:none;background:transparent;border-radius:3px;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--text-s);transition:all .2s;}
+.atab.active{background:var(--army);color:var(--gold-l);}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-s);margin-bottom:5px;}
+.fg input,.fg select{width:100%;padding:10px 13px;border-radius:3px;border:1.5px solid var(--border);background:var(--cream);color:var(--text);font-size:13.5px;transition:border-color .2s;outline:none;}
+.fg input:focus,.fg select:focus{border-color:var(--army);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btnp{width:100%;padding:13px;border:none;border-radius:3px;background:var(--army);color:var(--gold-l);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:2px;text-transform:uppercase;transition:all .2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btnp:hover{background:var(--army-l);transform:translateY(-1px);}
+.btnp:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.pnotice{background:rgba(230,126,34,.1);border:1px solid rgba(230,126,34,.3);border-radius:3px;padding:11px 13px;font-size:12.5px;color:var(--warn);margin-top:10px;display:none;}
+.aerr{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);border-radius:3px;padding:10px 13px;font-size:12.5px;color:var(--red);margin-top:10px;display:none;}
+
+/* LAYOUT */
+#app{display:none;min-height:100vh;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:var(--army);display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sb-hdr{padding:18px 16px;border-bottom:1px solid rgba(201,168,76,.2);}
+.sb-hdr .aname{font-size:15px;font-weight:700;color:var(--gold-l);letter-spacing:1.5px;text-transform:uppercase;line-height:1;}
+.sb-hdr .asub{font-size:9px;color:rgba(245,240,232,.35);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.sb-user{padding:12px 16px;background:rgba(0,0,0,.2);margin:8px 0;}
+.sb-user .un{font-size:13px;font-weight:600;color:var(--cream);}
+.sb-user .ur{font-size:10px;color:var(--gold);letter-spacing:1px;}
+.sb-user .ubadge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:2px;font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.ba{background:rgba(201,168,76,.25);color:var(--gold-l);}
+.bm{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);}
+.nlbl{padding:7px 16px 3px;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.25);font-weight:600;}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 16px;color:rgba(255,255,255,.55);font-size:13px;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:all .15s;user-select:none;}
+.ni:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.ni.active{background:rgba(201,168,76,.12);color:var(--gold-l);border-left-color:var(--gold);}
+.ni .ic{font-size:15px;width:18px;text-align:center;}
+.nbadge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;}
+.sbftr{margin-top:auto;padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);}
+.lbtn{width:100%;padding:9px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.4);border-radius:3px;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-family:'Rajdhani',sans-serif;font-weight:600;transition:all .2s;}
+.lbtn:hover{background:rgba(192,57,43,.2);border-color:rgba(192,57,43,.4);color:#E74C3C;}
+
+/* MAIN */
+.main{margin-left:var(--sw);min-height:100vh;}
+.topbar{background:var(--paper);border-bottom:1px solid var(--border);padding:0 26px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar h1{font-size:19px;color:var(--army);letter-spacing:1px;}
+.dchip{font-size:11.5px;color:var(--text-s);background:var(--cream-d);padding:5px 11px;border-radius:2px;letter-spacing:.5px;}
+.page{display:none;padding:24px;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--border);border-radius:4px;padding:20px;}
+.ctitle{font-size:15px;color:var(--army);letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;margin-bottom:20px;}
+.sc{background:#fff;border:1px solid var(--border);border-radius:4px;padding:16px 18px;position:relative;overflow:hidden;}
+.sc .sl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-s);font-weight:600;}
+.sc .sv{font-size:26px;font-family:'Rajdhani',sans-serif;font-weight:700;margin-top:3px;}
+.sc .ss{font-size:11px;color:var(--text-s);margin-top:1px;}
+.sg{color:var(--green);border-top:3px solid var(--green);}
+.so{color:var(--gold);border-top:3px solid var(--gold);}
+.sa{color:var(--army);border-top:3px solid var(--army);}
+.sr{color:var(--red);border-top:3px solid var(--red);}
+
+/* TABLE */
+.twrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--army);}
+thead th{padding:9px 13px;color:var(--gold-l);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:var(--cream);}
+tbody td{padding:10px 13px;color:var(--text-m);vertical-align:middle;}
+
+/* PILLS & BTNS */
+.pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+.pg{background:rgba(39,174,96,.12);color:var(--green);}
+.po{background:rgba(230,126,34,.12);color:var(--warn);}
+.pr{background:rgba(192,57,43,.12);color:var(--red);}
+.pb{background:rgba(41,128,185,.12);color:var(--blue);}
+.pa{background:rgba(45,74,30,.1);color:var(--army);}
+.btn{padding:7px 14px;border:none;border-radius:3px;font-size:12px;font-weight:600;letter-spacing:.5px;transition:all .15s;display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+.bsm{padding:4px 9px;font-size:11px;}
+.bgreen{background:var(--green);color:#fff;}.bgreen:hover{background:#229954;}
+.bred{background:var(--red);color:#fff;}.bred:hover{background:#A93226;}
+.bgold{background:var(--gold);color:var(--text);}.bgold:hover{background:var(--gold-l);}
+.barmy{background:var(--army);color:var(--gold-l);}.barmy:hover{background:var(--army-l);}
+.bout{background:transparent;border:1.5px solid var(--border);color:var(--text-m);}.bout:hover{border-color:var(--army);color:var(--army);}
+.brow{display:flex;gap:7px;flex-wrap:wrap;}
+
+/* MEAL GRID */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.mday{border:1.5px solid var(--border);border-radius:4px;overflow:hidden;}
+.mdayh{background:var(--army);padding:9px 13px;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--gold-l);letter-spacing:1px;}
+.mslots{padding:10px;display:flex;flex-direction:column;gap:7px;}
+.mslot{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:3px;background:var(--cream);border:1.5px solid transparent;transition:all .15s;}
+.mslot.on{border-color:var(--army);background:rgba(45,74,30,.07);}
+.mname{font-size:12.5px;font-weight:500;}
+.mtime{font-size:10px;color:var(--text-s);}
+.tog{width:34px;height:19px;border-radius:9px;border:none;background:var(--border);position:relative;transition:background .2s;cursor:pointer;flex-shrink:0;}
+.tog.on{background:var(--army);}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .2s;}
+.tog.on::after{transform:translateX(15px);}
+
+/* BILLING */
+.bsum{border:1.5px solid var(--gold);border-radius:4px;padding:18px;background:linear-gradient(135deg,rgba(201,168,76,.05),transparent);}
+.brow2{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+.brow2:last-child{border-bottom:none;font-weight:700;font-size:14.5px;color:var(--army);}
+.brow2 .amt{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;}
+.credit{color:var(--green);}.debit{color:var(--red);}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.moverlay.open{display:flex;}
+.modal{background:var(--paper);border-radius:4px;border-top:3px solid var(--gold);padding:26px;width:480px;max-width:100%;max-height:85vh;overflow-y:auto;animation:cardIn .3s ease both;}
+.modal h3{font-size:17px;color:var(--army);margin-bottom:18px;letter-spacing:.5px;}
+.mftr{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
+
+/* MISC */
+.shead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.shead h2{font-size:17px;color:var(--army);letter-spacing:.5px;}
+.alert{padding:11px 14px;border-radius:3px;font-size:12.5px;margin-bottom:14px;}
+.ai{background:rgba(41,128,185,.1);border-left:3px solid var(--blue);color:#2471A3;}
+.aw{background:rgba(230,126,34,.1);border-left:3px solid var(--warn);color:var(--warn);}
+.as{background:rgba(39,174,96,.1);border-left:3px solid var(--green);color:var(--green);}
+.empty{text-align:center;padding:36px;color:var(--text-s);font-size:13px;}
+.pbar{height:5px;background:var(--cream-d);border-radius:3px;overflow:hidden;}
+.pfill{height:100%;border-radius:3px;transition:width .4s;}
+.loading{text-align:center;padding:30px;color:var(--text-s);font-size:13px;}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--army);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--army);color:var(--cream);padding:11px 18px;border-radius:4px;font-size:13px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateY(60px);opacity:0;transition:all .3s;border-left:3px solid var(--gold);max-width:320px;}
+.toast.show{transform:none;opacity:1;}
+
+/* CONFIG BANNER */
+.cfg-banner{background:rgba(192,57,43,.1);border:1.5px solid rgba(192,57,43,.3);border-radius:4px;padding:16px 18px;margin-bottom:20px;}
+.cfg-banner h3{color:var(--red);font-size:15px;margin-bottom:6px;}
+.cfg-banner p{font-size:12.5px;color:var(--text-m);line-height:1.7;}
+.cfg-banner code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:2px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<!-- ════════ CONFIG — PASTE YOUR APPS SCRIPT URL HERE ════════ -->
+<script>
+// ⚠️  REPLACE THIS URL with your deployed Apps Script Web App URL
+// After following setup instructions in README.md
+const API_URL = 'https://script.google.com/macros/s/AKfycbyXzSmKZz_VoF70GHHz9NHj_I1Mmucz4N09bhk6nOdQziaBA3gXAZgeqSaNZY_Ofgzq/exec';
+const IS_CONFIGURED = API_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
+</script>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="acard">
+    <div class="alogo">
+      <div class="crest">🎖️</div>
+      <h2>Officers Mess</h2>
+      <p>Management System</p>
+    </div>
+    <div id="cfg-warn" style="display:none" class="cfg-banner" style="margin-bottom:16px">
+      <h3>⚠️ Setup Required</h3>
+      <p>Open <code>index.html</code> and replace <code>YOUR_APPS_SCRIPT_URL_HERE</code> with your Google Apps Script URL. See <strong>README.md</strong> for step-by-step instructions.</p>
+    </div>
+    <div class="atabs">
+      <button class="atab active" onclick="switchTab('login')">Sign In</button>
+      <button class="atab" onclick="switchTab('signup')">Register</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="lform">
+      <div class="fg"><label>Email</label><input type="email" id="l-email" placeholder="officer@mess.mil"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"/></div>
+      <button class="btnp" id="l-btn" onclick="doLogin()">Sign In</button>
+      <div class="aerr" id="l-err"></div>
+    </div>
+    <!-- SIGNUP -->
+    <div id="sform" style="display:none">
+      <div class="frow">
+        <div class="fg"><label>First Name</label><input type="text" id="s-fn" placeholder="Muhammad"/></div>
+        <div class="fg"><label>Last Name</label><input type="text" id="s-ln" placeholder="Ali"/></div>
+      </div>
+      <div class="fg"><label>Rank</label>
+        <select id="s-rank">
+          <option>Lieutenant</option><option>Captain</option><option selected>Major</option>
+          <option>Lieutenant Colonel</option><option>Colonel</option><option>Brigadier</option>
+        </select>
+      </div>
+      <div class="fg"><label>Service Number</label><input type="text" id="s-svc" placeholder="SVC-XXXX"/></div>
+      <div class="fg"><label>Email</label><input type="email" id="s-email" placeholder="officer@mess.mil"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="s-pass" placeholder="Minimum 8 characters"/></div>
+      <button class="btnp" id="s-btn" onclick="doSignup()">Submit Registration</button>
+      <div class="aerr" id="s-err"></div>
+      <div class="pnotice" id="s-ok">✅ Registration submitted! Your account will be activated after admin approval. Please check back in 24 hours.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sb-hdr"><div class="aname">Officers Mess</div><div class="asub">Management System</div></div>
+    <div class="sb-user">
+      <div class="ur" id="sb-rank"></div>
+      <div class="un" id="sb-name"></div>
+      <span class="ubadge" id="sb-badge"></span>
+    </div>
+    <div style="padding:6px 0">
+      <div class="nlbl">My Area</div>
+      <div class="ni active" onclick="go('dashboard')"><span class="ic">🏠</span> Dashboard</div>
+      <div class="ni" onclick="go('meals')"><span class="ic">🍽️</span> Meal Willingness</div>
+      <div class="ni" onclick="go('mybill')"><span class="ic">📄</span> My Bill</div>
+      <div class="ni" onclick="go('profile')"><span class="ic">👤</span> My Profile</div>
+    </div>
+    <div id="admin-nav" style="display:none;padding:6px 0">
+      <div class="nlbl">Administration</div>
+      <div class="ni" onclick="go('requests')"><span class="ic">📋</span> Signup Requests <span class="nbadge" id="rbadge">0</span></div>
+      <div class="ni" onclick="go('members')"><span class="ic">👥</span> Members</div>
+      <div class="ni" onclick="go('attendance')"><span class="ic">📊</span> Attendance</div>
+      <div class="ni" onclick="go('expenditure')"><span class="ic">💰</span> Expenditure</div>
+      <div class="ni" onclick="go('billing')"><span class="ic">🧾</span> Monthly Billing</div>
+      <div class="ni" onclick="go('charges')"><span class="ic">➕</span> Custom Charges</div>
+      <div class="ni" onclick="go('reports')"><span class="ic">📈</span> Reports</div>
+    </div>
+    <div class="sbftr"><button class="lbtn" onclick="logout()">⎋ &nbsp;Sign Out</button></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="ptitle">Dashboard</h1>
+      <div class="dchip" id="datedisp"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="sgrid" id="d-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="d-bottom"></div>
+    </div>
+
+    <!-- MEAL WILLINGNESS -->
+    <div class="page" id="page-meals">
+      <div class="alert ai" style="margin-bottom:16px">Mark your meal preferences for each day. Deadline: 10:00 PM daily. Changes apply from next meal.</div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ctitle">📅 Weekly Meal Preferences</div>
+        <div class="mgrid" id="mgrid"></div>
+      </div>
+      <div style="text-align:right"><button class="btn barmy" onclick="saveMeals()">💾 Save Preferences</button></div>
+    </div>
+
+    <!-- MY BILL -->
+    <div class="page" id="page-mybill">
+      <div class="alert ai" id="bill-info"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card"><div class="ctitle">🍽️ My Meal Attendance</div><div id="my-meals"></div></div>
+        <div class="card"><div class="ctitle">🧾 Bill Summary</div><div class="bsum" id="my-bsum"></div></div>
+      </div>
+      <div class="card"><div class="ctitle">📋 Charge Breakdown</div><div class="twrap" id="my-charges"></div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="card" style="max-width:500px"><div class="ctitle">👤 My Profile</div><div id="profile-c"></div></div>
+    </div>
+
+    <!-- REQUESTS -->
+    <div class="page" id="page-requests">
+      <div class="card">
+        <div class="shead"><h2>Pending Signup Requests</h2><div id="rcount" class="dchip"></div></div>
+        <div class="twrap"><table><thead><tr><th>Name</th><th>Rank</th><th>Svc No.</th><th>Email</th><th>Applied</th><th>Action</th></tr></thead><tbody id="req-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="page-members">
+      <div class="card">
+        <div class="shead"><h2>Active Members</h2><button class="btn barmy" onclick="openModal('modal-addmember')">+ Add Member</button></div>
+        <div class="twrap"><table><thead><tr><th>Rank & Name</th><th>Svc No.</th><th>Email</th><th>Advance (Rs.)</th><th>Role</th><th>Actions</th></tr></thead><tbody id="mem-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <div class="card" style="margin-bottom:14px">
+        <div class="shead"><h2 id="att-title">Attendance</h2><button class="btn barmy" onclick="openAttModal()">✅ Mark Today</button></div>
+        <div class="sgrid" id="att-stats" style="margin-bottom:0"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">📊 Monthly Summary</div>
+        <div class="twrap"><table><thead><tr><th>Member</th><th>🌅 Breakfast</th><th>☀️ Lunch</th><th>🌙 Dinner</th><th>Total</th><th>Today's Plan</th></tr></thead><tbody id="att-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- EXPENDITURE -->
+    <div class="page" id="page-expenditure">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="ctitle">💰 Add Expenditure</div>
+          <div class="fg"><label>Month</label><input type="month" id="e-month"/></div>
+          <div class="fg"><label>Category</label><select id="e-cat"><option>Rations & Groceries</option><option>Gas & Fuel</option><option>Staff Wages</option><option>Utilities</option><option>Maintenance</option><option>Miscellaneous</option></select></div>
+          <div class="fg"><label>Description</label><input type="text" id="e-desc" placeholder="e.g., Monthly ration purchase"/></div>
+          <div class="fg"><label>Amount (Rs.)</label><input type="number" id="e-amt" placeholder="0"/></div>
+          <button class="btn barmy" onclick="addExp()">+ Add Entry</button>
+        </div>
+        <div class="card"><div class="ctitle">📊 Monthly Summary</div><div id="exp-summary"></div></div>
+      </div>
+      <div class="card">
+        <div class="shead"><h2>Expenditure Log</h2><select id="e-filter" class="btn bout" onchange="loadExp()" style="padding:5px 10px;font-size:12px"></select></div>
+        <div class="twrap"><table><thead><tr><th>Month</th><th>Category</th><th>Description</th><th>Amount (Rs.)</th><th>Added By</th><th>Del</th></tr></thead><tbody id="exp-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="page" id="page-billing">
+      <div class="card" style="margin-bottom:16px">
+        <div class="shead"><h2>Monthly Billing Calculator</h2></div>
+        <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px">
+          <div class="fg" style="margin:0;flex:1;max-width:220px"><label>Select Month</label><input type="month" id="bill-month" onchange="calcBilling()"/></div>
+          <button class="btn barmy" onclick="calcBilling()">⟳ Recalculate</button>
+        </div>
+        <div id="bill-header"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">🧾 Per-Member Bills</div>
+        <div class="twrap"><table><thead><tr><th>Member</th><th>Meals</th><th>Meal Cost</th><th>Custom Charges</th><th>Gross Total</th><th>Advance</th><th>Balance</th><th>Status</th></tr></thead><tbody id="bill-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CHARGES -->
+    <div class="page" id="page-charges">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="ctitle">➕ Add Custom Charge</div>
+          <div class="fg"><label>Month</label><input type="month" id="cc-month"/></div>
+          <div class="fg"><label>Charge Name</label><input type="text" id="cc-name" placeholder="e.g., Internet, Newspaper"/></div>
+          <div class="fg"><label>Apply To</label><select id="cc-target"><option value="all">All Members</option></select></div>
+          <div class="fg"><label>Amount (Rs.)</label><input type="number" id="cc-amt" placeholder="0"/></div>
+          <div class="fg"><label>Notes</label><input type="text" id="cc-notes" placeholder="Optional"/></div>
+          <button class="btn barmy" onclick="addCharge()">+ Add</button>
+        </div>
+        <div class="card">
+          <div class="ctitle">📋 Custom Charges Log</div>
+          <div class="twrap"><table><thead><tr><th>Month</th><th>Name</th><th>Member</th><th>Rs.</th><th>Del</th></tr></thead><tbody id="cc-tbody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="sgrid" id="rpt-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="ctitle">📈 Top Consumers</div><div id="top-c"></div></div>
+        <div class="card"><div class="ctitle">💡 Advance Utilization</div><div id="adv-ov"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="moverlay" id="modal-att">
+  <div class="modal">
+    <h3>✅ Mark Today's Attendance</h3>
+    <p style="font-size:12px;color:var(--text-s);margin-bottom:12px" id="att-date-lbl"></p>
+    <div id="att-modal-c"></div>
+    <div class="mftr">
+      <button class="btn bout" onclick="closeModal('modal-att')">Cancel</button>
+      <button class="btn barmy" onclick="saveAtt()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="moverlay" id="modal-addmember">
+  <div class="modal">
+    <h3>➕ Add New Member</h3>
+    <div class="frow"><div class="fg"><label>First Name</label><input id="am-fn" type="text"/></div><div class="fg"><label>Last Name</label><input id="am-ln" type="text"/></div></div>
+    <div class="fg"><label>Rank</label><select id="am-rank"><option>Lieutenant</option><option>Captain</option><option>Major</option><option>Lieutenant Colonel</option><option>Colonel</option><option>Brigadier</option></select></div>
+    <div class="fg"><label>Service No.</label><input id="am-svc" type="text" placeholder="SVC-XXXX"/></div>
+    <div class="fg"><label>Email</label><input id="am-email" type="email"/></div>
+    <div class="fg"><label>Advance (Rs.)</label><input id="am-adv" type="number" value="6000"/></div>
+    <p style="font-size:11px;color:var(--text-s);margin-top:-6px">Default password will be: <strong>mess@1234</strong></p>
+    <div class="mftr">
+      <button class="btn bout" onclick="closeModal('modal-addmember')">Cancel</button>
+      <button class="btn barmy" onclick="saveMember()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let S = {
+  user: null,
+  members: [],
+  requests: [],
+  attendance: [],
+  expenditure: [],
+  charges: [],
+  mealWillingness: {},
+  currentMonth: '',
+};
+
+const TODAY = new Date();
+const MONTH = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MEALS = ['Breakfast','Lunch','Dinner'];
+const MEAL_ICONS = {Breakfast:'🌅',Lunch:'☀️',Dinner:'🌙'};
+const MEAL_TIMES = {Breakfast:'07:00–09:00',Lunch:'13:00–14:30',Dinner:'20:00–21:30'};
+
+// ════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════
+async function api(action, data={}) {
+  if (!IS_CONFIGURED) {
+    showToast('⚠️ Please configure API_URL first. See README.md', true);
+    throw new Error('Not configured');
+  }
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, ...data }),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'API error');
+  return json;
+}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+window.onload = () => {
+  if (!IS_CONFIGURED) document.getElementById('cfg-warn').style.display = 'block';
+  document.getElementById('datedisp').textContent = TODAY.toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+};
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+function switchTab(t) {
+  document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('active',(t==='login'&&i===0)||(t==='signup'&&i===1)));
+  document.getElementById('lform').style.display = t==='login'?'':'none';
+  document.getElementById('sform').style.display = t==='signup'?'':'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const btn = document.getElementById('l-btn');
+  const err = document.getElementById('l-err');
+  err.style.display='none';
+  if(!email||!password){showErr(err,'Please enter email and password.');return;}
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Signing in...';
+  try {
+    const r = await api('login',{email,password});
+    S.user = r.member;
+    bootApp();
+  } catch(e) {
+    showErr(err, e.message);
+    btn.disabled=false; btn.innerHTML='Sign In';
+  }
+}
+
+async function doSignup() {
+  const fname=document.getElementById('s-fn').value.trim();
+  const lname=document.getElementById('s-ln').value.trim();
+  const rank=document.getElementById('s-rank').value;
+  const svc=document.getElementById('s-svc').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  const password=document.getElementById('s-pass').value;
+  const btn=document.getElementById('s-btn');
+  const err=document.getElementById('s-err');
+  err.style.display='none';
+  if(!fname||!lname||!svc||!email||!password){showErr(err,'Please fill all fields.');return;}
+  if(password.length<8){showErr(err,'Password must be at least 8 characters.');return;}
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Submitting...';
+  try {
+    await api('signup',{fname,lname,rank,svc,email,password});
+    document.getElementById('s-ok').style.display='block';
+    btn.style.display='none';
+  } catch(e) {
+    showErr(err,e.message);
+    btn.disabled=false; btn.innerHTML='Submit Registration';
+  }
+}
+
+function showErr(el, msg) { el.textContent=msg; el.style.display='block'; }
+
+async function bootApp() {
+  const u = S.user;
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('sb-rank').textContent=u.rank;
+  document.getElementById('sb-name').textContent=`${u.fname} ${u.lname}`;
+  const badge=document.getElementById('sb-badge');
+  badge.textContent=u.role==='admin'?'Admin':'Member';
+  badge.className=`ubadge ${u.role==='admin'?'ba':'bm'}`;
+  document.getElementById('admin-nav').style.display=u.role==='admin'?'':'none';
+  S.currentMonth=MONTH;
+  // Preload data
+  try {
+    const [mRes] = await Promise.all([api('getMembers')]);
+    S.members = mRes.members;
+    if(u.role==='admin'){
+      const rRes = await api('getRequests');
+      S.requests = rRes.requests;
+      document.getElementById('rbadge').textContent=S.requests.length;
+    }
+  } catch(e){}
+  go('dashboard');
+}
+
+function logout() {
+  S = {user:null,members:[],requests:[],attendance:[],expenditure:[],charges:[],mealWillingness:{},currentMonth:''};
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth').style.display='flex';
+  document.getElementById('l-err').style.display='none';
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+}
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+const PAGE_TITLES={dashboard:'🏠 Dashboard',meals:'🍽️ Meal Willingness',mybill:'📄 My Bill',profile:'👤 My Profile',requests:'📋 Signup Requests',members:'👥 Members',attendance:'📊 Attendance',expenditure:'💰 Expenditure',billing:'🧾 Monthly Billing',charges:'➕ Custom Charges',reports:'📈 Reports'};
+
+function go(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById(`page-${id}`);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')===`go('${id}')`)n.classList.add('active');});
+  document.getElementById('ptitle').textContent=PAGE_TITLES[id]||id;
+  renderPage(id);
+}
+
+async function renderPage(id) {
+  switch(id){
+    case 'dashboard': await renderDash(); break;
+    case 'meals': await renderMeals(); break;
+    case 'mybill': await renderMyBill(); break;
+    case 'profile': renderProfile(); break;
+    case 'requests': await renderRequests(); break;
+    case 'members': await renderMembers(); break;
+    case 'attendance': await renderAttendance(); break;
+    case 'expenditure': await renderExpenditure(); break;
+    case 'billing': await calcBilling(); break;
+    case 'charges': await renderCharges(); break;
+    case 'reports': await renderReports(); break;
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+function monthName(ym){if(!ym)return'';const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-PK',{month:'long',year:'numeric'});}
+function calcTotalMeals(att){let t=0;att.forEach(a=>{if(String(a.breakfast)==='true')t++;if(String(a.lunch)==='true')t++;if(String(a.dinner)==='true')t++;});return t;}
+function getMemberMeals(att,mid){let t=0;att.filter(a=>a.memberId===mid).forEach(a=>{if(String(a.breakfast)==='true')t++;if(String(a.lunch)==='true')t++;if(String(a.dinner)==='true')t++;});return t;}
+function getMemberMealType(att,mid,type){return att.filter(a=>a.memberId===mid&&String(a[type])==='true').length;}
+function getCustomTotal(charges,mid,ym){return charges.filter(c=>c.month===ym&&(c.memberId==='all'||c.memberId===mid)).reduce((a,b)=>a+Number(b.amount),0);}
+function loading(el){document.getElementById(el).innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';}
+function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.borderLeftColor=err?'var(--red)':'var(--gold)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════
+async function renderDash() {
+  const u=S.user, isAdmin=u.role==='admin';
+  const st=document.getElementById('d-stats');
+  st.innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';
+  try {
+    const attRes=await api('getAttendance',{month:MONTH});
+    const att=attRes.records;
+    const expRes=await api('getExpenditure',{month:MONTH});
+    const exp=expRes.records;
+    const chgRes=await api('getCharges',{month:MONTH});
+    const chg=chgRes.records;
+    const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const totalMeals=calcTotalMeals(att);
+    const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
+
+    if(isAdmin){
+      st.innerHTML=`
+        <div class="sc sa"><div class="sl">Active Members</div><div class="sv">${S.members.length}</div><div class="ss">Officers in mess</div></div>
+        <div class="sc so"><div class="sl">Monthly Expenditure</div><div class="sv">Rs.${(totalExp/1000).toFixed(1)}K</div><div class="ss">${monthName(MONTH)}</div></div>
+        <div class="sc sg"><div class="sl">Per Meal Rate</div><div class="sv">Rs.${perMeal}</div><div class="ss">Auto-calculated</div></div>
+        <div class="sc sr"><div class="sl">Pending Requests</div><div class="sv">${S.requests.length}</div><div class="ss">Awaiting approval</div></div>`;
+    } else {
+      const myMeals=getMemberMeals(att,u.id);
+      const myCost=myMeals*perMeal;
+      const myCustom=getCustomTotal(chg,u.id,MONTH);
+      const gross=myCost+myCustom;
+      const adv=Number(u.advance)||6000;
+      const bal=adv-gross;
+      st.innerHTML=`
+        <div class="sc sa"><div class="sl">My Meals This Month</div><div class="sv">${myMeals}</div><div class="ss">Breakfast+Lunch+Dinner</div></div>
+        <div class="sc so"><div class="sl">Per Meal Rate</div><div class="sv">Rs.${perMeal}</div><div class="ss">Rs.${myCost.toLocaleString()} total</div></div>
+        <div class="sc sg"><div class="sl">Advance Balance</div><div class="sv">Rs.${Math.abs(bal).toLocaleString()}</div><div class="ss">${bal>=0?'Surplus':'Deficit'}</div></div>
+        <div class="sc sr"><div class="sl">Custom Charges</div><div class="sv">Rs.${myCustom.toLocaleString()}</div><div class="ss">This month</div></div>`;
+    }
+
+    // Bottom cards
+    const todayDay=DAYS[((TODAY.getDay()+6)%7)]; // Mon=0
+    const w=S.mealWillingness[u.id]||{};
+    document.getElementById('d-bottom').innerHTML=`
+      <div class="card">
+        <div class="ctitle">🍽️ Today (${todayDay})</div>
+        ${MEALS.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:13.5px">${MEAL_ICONS[m]} ${m}</span>
+          <span class="pill ${w[`${todayDay}-${m}`]?'pg':'pr'}">${w[`${todayDay}-${m}`]?'Opted In':'Opted Out'}</span>
+        </div>`).join('')}
+        <div style="margin-top:10px"><button class="btn bout bsm" onclick="go('meals')">Update →</button></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">📌 Notices</div>
+        <div class="alert ai" style="margin-bottom:8px">📋 Mess Committee meeting on last day of month.</div>
+        <div class="alert aw" style="margin-bottom:8px">⏰ Meal preference deadline: 10 PM daily.</div>
+        <div class="alert as">✅ Month-end billing generated on 31st.</div>
+      </div>`;
+  } catch(e){ st.innerHTML=`<div class="empty">Error loading data: ${e.message}</div>`; }
+}
+
+// ════════════════════════════════════════════════════
+//  MEAL WILLINGNESS
+// ════════════════════════════════════════════════════
+async function renderMeals() {
+  const u=S.user;
+  document.getElementById('mgrid').innerHTML='<div class="loading"><span class="spin"></span> Loading...</div>';
+  try {
+    const r=await api('getMealWillingness',{memberId:u.id});
+    const prefs={};
+    r.records.forEach(rec=>{prefs[rec.dayMeal]=String(rec.willing)==='true';});
+    S.mealWillingness[u.id]=prefs;
+    document.getElementById('mgrid').innerHTML=DAYS.map(day=>`
+      <div class="mday">
+        <div class="mdayh">${day}</div>
+        <div class="mslots">
+          ${MEALS.map(meal=>{
+            const key=`${day}-${meal}`,on=!!prefs[key];
+            return `<div class="mslot ${on?'on':''}" id="slot-${day}-${meal}">
+              <div><div class="mname">${MEAL_ICONS[meal]} ${meal}</div><div class="mtime">${MEAL_TIMES[meal]}</div></div>
+              <button class="tog ${on?'on':''}" id="tog-${day}-${meal}" onclick="toggleMeal('${day}','${meal}')"></button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+  } catch(e){document.getElementById('mgrid').innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+
+function toggleMeal(day,meal) {
+  const u=S.user;
+  if(!S.mealWillingness[u.id])S.mealWillingness[u.id]={};
+  const key=`${day}-${meal}`;
+  S.mealWillingness[u.id][key]=!S.mealWillingness[u.id][key];
+  const on=S.mealWillingness[u.id][key];
+  document.getElementById(`tog-${day}-${meal}`).className=`tog ${on?'on':''}`;
+  document.getElementById(`slot-${day}-${meal}`).className=`mslot ${on?'on':''}`;
+}
+
+async function saveMeals() {
+  const u=S.user;
+  const prefs=S.mealWillingness[u.id]||{};
+  try {
+    await api('saveMealWillingness',{memberId:u.id,preferences:prefs});
+    showToast('✅ Meal preferences saved!');
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  MY BILL
+// ════════════════════════════════════════════════════
+async function renderMyBill() {
+  const u=S.user;
+  loading('my-meals'); loading('my-bsum'); loading('my-charges');
+  try {
+    const [attRes,expRes,chgRes,wRes]=await Promise.all([
+      api('getAttendance',{month:MONTH}),
+      api('getExpenditure',{month:MONTH}),
+      api('getCharges',{month:MONTH}),
+      api('getMealWillingness',{memberId:u.id}),
+    ]);
+    const att=attRes.records,exp=expRes.records,chg=chgRes.records;
+    const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const totalMeals=calcTotalMeals(att);
+    const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
+    const myB=getMemberMealType(att,u.id,'breakfast');
+    const myL=getMemberMealType(att,u.id,'lunch');
+    const myD=getMemberMealType(att,u.id,'dinner');
+    const myMeals=myB+myL+myD;
+    const myCost=myMeals*perMeal;
+    const myChg=chg.filter(c=>c.memberId==='all'||c.memberId===u.id);
+    const myCustom=myChg.reduce((a,b)=>a+Number(b.amount),0);
+    const gross=myCost+myCustom;
+    const adv=Number(u.advance)||6000;
+    const bal=adv-gross;
+    document.getElementById('bill-info').textContent=`Bill for ${monthName(MONTH)} — Per meal rate: Rs.${perMeal} | Total expenditure: Rs.${totalExp.toLocaleString()} ÷ ${totalMeals} meals`;
+    document.getElementById('my-meals').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:10px">
+        ${[['🌅','Breakfasts',myB],['☀️','Lunches',myL],['🌙','Dinners',myD]].map(([ic,lb,v])=>`
+          <div style="text-align:center;padding:12px;background:var(--cream);border-radius:3px">
+            <div style="font-size:20px">${ic}</div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--army)">${v}</div>
+            <div style="font-size:10px;color:var(--text-s)">${lb}</div>
+          </div>`).join('')}
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${Math.min(100,Math.round(myMeals/(TODAY.getDate()*3)*100))}%;background:var(--army)"></div></div>
+      <div style="font-size:11px;color:var(--text-s);margin-top:4px">${myMeals} of ${TODAY.getDate()*3} possible meals</div>`;
+    document.getElementById('my-bsum').innerHTML=`
+      <div class="brow2"><span>Meal Cost (${myMeals}×Rs.${perMeal})</span><span class="amt debit">Rs.${myCost.toLocaleString()}</span></div>
+      ${myChg.map(c=>`<div class="brow2"><span>${c.name}</span><span class="amt debit">Rs.${Number(c.amount).toLocaleString()}</span></div>`).join('')}
+      <div class="brow2"><span>Gross Total</span><span class="amt debit">Rs.${gross.toLocaleString()}</span></div>
+      <div class="brow2"><span>Advance Paid</span><span class="amt credit">Rs.${adv.toLocaleString()}</span></div>
+      <div class="brow2"><span>${bal>=0?'💚 Surplus / Refund':'🔴 Amount Due'}</span><span class="amt ${bal>=0?'credit':'debit'}">Rs.${Math.abs(bal).toLocaleString()}</span></div>`;
+    document.getElementById('my-charges').innerHTML=`<table><thead><tr><th>#</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody>
+      <tr><td>1</td><td>Meal charges (${myMeals} meals @ Rs.${perMeal})</td><td><span class="pill pa">Mess</span></td><td>${myCost.toLocaleString()}</td></tr>
+      ${myChg.map((c,i)=>`<tr><td>${i+2}</td><td>${c.name}${c.notes?` — <em style="color:var(--text-s)">${c.notes}</em>`:''}</td><td><span class="pill pb">Custom</span></td><td>${Number(c.amount).toLocaleString()}</td></tr>`).join('')}
+      <tr style="font-weight:700;background:var(--cream)"><td colspan="3" style="text-align:right">Total</td><td>${gross.toLocaleString()}</td></tr>
+    </tbody></table>`;
+  } catch(e){showToast('Error loading bill: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  PROFILE
+// ════════════════════════════════════════════════════
+function renderProfile() {
+  const u=S.user;
+  document.getElementById('profile-c').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border)">
+      <div style="width:58px;height:58px;border-radius:50%;background:var(--army);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold-l);font-family:'Rajdhani',sans-serif;font-weight:700">${u.fname[0]}${u.lname[0]}</div>
+      <div>
+        <div style="font-size:18px;font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--army)">${u.rank} ${u.fname} ${u.lname}</div>
+        <div style="font-size:11.5px;color:var(--text-s)">${u.svc} · ${u.email}</div>
+        <span class="pill ${u.role==='admin'?'pa':'pb'}" style="margin-top:3px">${u.role}</span>
+      </div>
+    </div>
+    <div class="fg"><label>First Name</label><input type="text" value="${u.fname}" onchange="S.user.fname=this.value"/></div>
+    <div class="fg"><label>Last Name</label><input type="text" value="${u.lname}" onchange="S.user.lname=this.value"/></div>
+    <div class="fg"><label>Email</label><input type="email" value="${u.email}" disabled style="opacity:.6"/></div>
+    <div class="fg"><label>Advance Paid (Rs.)</label><input type="number" value="${u.advance||6000}" onchange="S.user.advance=parseInt(this.value)"/></div>
+    <button class="btn barmy" onclick="showToast('✅ Profile updated (local only)')">Save Changes</button>`;
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — REQUESTS
+// ════════════════════════════════════════════════════
+async function renderRequests() {
+  loading('req-tbody');
+  try {
+    const r=await api('getRequests');
+    S.requests=r.requests;
+    document.getElementById('rbadge').textContent=S.requests.length;
+    document.getElementById('rcount').textContent=`${S.requests.length} pending`;
+    document.getElementById('req-tbody').innerHTML=S.requests.length===0
+      ?`<tr><td colspan="6"><div class="empty">✅ No pending requests.</div></td></tr>`
+      :S.requests.map(r=>`<tr>
+          <td><strong>${r.fname} ${r.lname}</strong></td><td>${r.rank}</td><td>${r.svc}</td><td>${r.email}</td>
+          <td>${String(r.appliedAt).substring(0,10)}</td>
+          <td><div class="brow">
+            <button class="btn bsm bgreen" onclick="approveReq('${r.id}')">✔ Approve</button>
+            <button class="btn bsm bred" onclick="rejectReq('${r.id}')">✘ Reject</button>
+          </div></td>
+        </tr>`).join('');
+  } catch(e){document.getElementById('req-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+async function approveReq(id) {
+  try {
+    await api('approveRequest',{requestId:id});
+    const req=S.requests.find(r=>r.id===id);
+    showToast(`✅ ${req?.rank} ${req?.fname} ${req?.lname} approved.`);
+    const mRes=await api('getMembers'); S.members=mRes.members;
+    await renderRequests();
+    populateMemberSelect();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function rejectReq(id) {
+  try {
+    await api('rejectRequest',{requestId:id});
+    showToast('Request rejected.');
+    await renderRequests();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — MEMBERS
+// ════════════════════════════════════════════════════
+async function renderMembers() {
+  loading('mem-tbody');
+  try {
+    const r=await api('getMembers'); S.members=r.members;
+    document.getElementById('mem-tbody').innerHTML=S.members.map(m=>`<tr>
+      <td><strong>${m.rank}</strong><br><span style="font-size:11px">${m.fname} ${m.lname}</span></td>
+      <td>${m.svc}</td><td>${m.email}</td><td>Rs.${Number(m.advance||6000).toLocaleString()}</td>
+      <td><span class="pill ${m.role==='admin'?'pa':'pg'}">${m.role}</span></td>
+      <td><div class="brow">
+        <button class="btn bsm bout" onclick="editAdv('${m.id}','${m.fname} ${m.lname}',${m.advance||6000})">Edit Advance</button>
+        <button class="btn bsm bred" onclick="deactivate('${m.id}','${m.fname} ${m.lname}')">Remove</button>
+      </div></td>
+    </tr>`).join('');
+    populateMemberSelect();
+  } catch(e){document.getElementById('mem-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+async function saveMember() {
+  const fn=document.getElementById('am-fn').value.trim(),ln=document.getElementById('am-ln').value.trim();
+  const rank=document.getElementById('am-rank').value,svc=document.getElementById('am-svc').value.trim();
+  const email=document.getElementById('am-email').value.trim(),adv=parseInt(document.getElementById('am-adv').value)||6000;
+  if(!fn||!ln||!svc||!email){showToast('Fill all fields',true);return;}
+  try {
+    const r=await api('addMember',{fname:fn,lname:ln,rank,svc,email,advance:adv});
+    closeModal('modal-addmember');
+    showToast('✅ '+r.message);
+    await renderMembers();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function editAdv(id,name,current) {
+  const v=prompt(`Edit advance for ${name}:`,current);
+  if(v===null)return;
+  try {
+    await api('updateAdvance',{memberId:id,advance:parseInt(v)||6000});
+    showToast('✅ Advance updated.');
+    await renderMembers();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function deactivate(id,name) {
+  if(!confirm(`Remove ${name} from active members?`))return;
+  try {
+    await api('deactivateMember',{memberId:id});
+    showToast('Member removed.');
+    await renderMembers();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  ATTENDANCE
+// ════════════════════════════════════════════════════
+async function renderAttendance() {
+  document.getElementById('att-title').textContent=`Attendance — ${monthName(MONTH)}`;
+  loading('att-tbody');
+  try {
+    const [attRes,wRes]=await Promise.all([api('getAttendance',{month:MONTH}),api('getMealWillingness',{})]);
+    const att=attRes.records;
+    const wAll=wRes.records;
+    const totalB=att.filter(a=>String(a.breakfast)==='true').length;
+    const totalL=att.filter(a=>String(a.lunch)==='true').length;
+    const totalD=att.filter(a=>String(a.dinner)==='true').length;
+    document.getElementById('att-stats').innerHTML=`
+      <div class="sc sa"><div class="sl">Breakfasts</div><div class="sv">${totalB}</div><div class="ss">This month</div></div>
+      <div class="sc so"><div class="sl">Lunches</div><div class="sv">${totalL}</div><div class="ss">This month</div></div>
+      <div class="sc sg"><div class="sl">Dinners</div><div class="sv">${totalD}</div><div class="ss">This month</div></div>
+      <div class="sc sr"><div class="sl">Total Meals</div><div class="sv">${totalB+totalL+totalD}</div><div class="ss">For billing</div></div>`;
+    const todayDay=DAYS[((TODAY.getDay()+6)%7)];
+    document.getElementById('att-tbody').innerHTML=S.members.map(m=>{
+      const b=getMemberMealType(att,m.id,'breakfast');
+      const l=getMemberMealType(att,m.id,'lunch');
+      const d=getMemberMealType(att,m.id,'dinner');
+      const mw=wAll.filter(w=>w.memberId===m.id);
+      const todayMeals=MEALS.filter(ml=>mw.find(w=>w.dayMeal===`${todayDay}-${ml}`&&String(w.willing)==='true')).join(', ')||'—';
+      return `<tr><td><strong>${m.rank}</strong> ${m.fname} ${m.lname}</td><td>${b}</td><td>${l}</td><td>${d}</td><td><strong>${b+l+d}</strong></td><td style="font-size:11.5px;color:var(--text-s)">${todayMeals}</td></tr>`;
+    }).join('');
+  } catch(e){document.getElementById('att-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+async function openAttModal() {
+  const dateStr=TODAY.toISOString().split('T')[0];
+  document.getElementById('att-date-lbl').textContent=`Date: ${dateStr}`;
+  try {
+    const r=await api('getAttendance',{month:MONTH});
+    const todayAtt=r.records.filter(a=>String(a.date).startsWith(dateStr));
+    document.getElementById('att-modal-c').innerHTML=`
+      <table style="width:100%;font-size:13px">
+        <thead><tr><th style="text-align:left;padding:6px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-s)">Member</th><th>🌅</th><th>☀️</th><th>🌙</th></tr></thead>
+        <tbody>${S.members.map(m=>{
+          const ex=todayAtt.find(a=>a.memberId===m.id)||{};
+          return `<tr><td style="padding:6px 0;font-size:12.5px">${m.rank} ${m.fname} ${m.lname}</td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-b" ${String(ex.breakfast)==='true'?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-l" ${String(ex.lunch)==='true'?'checked':''}></td>
+            <td style="text-align:center"><input type="checkbox" id="at-${m.id}-d" ${String(ex.dinner)==='true'?'checked':''}></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    openModal('modal-att');
+  } catch(e){showToast('Error loading attendance: '+e.message,true);}
+}
+
+async function saveAtt() {
+  const dateStr=TODAY.toISOString().split('T')[0];
+  const entries=S.members.map(m=>({
+    memberId:m.id,
+    breakfast:document.getElementById(`at-${m.id}-b`)?.checked||false,
+    lunch:document.getElementById(`at-${m.id}-l`)?.checked||false,
+    dinner:document.getElementById(`at-${m.id}-d`)?.checked||false,
+  }));
+  try {
+    await api('saveAttendance',{date:dateStr,entries,markedBy:S.user.fname});
+    closeModal('modal-att');
+    showToast('✅ Attendance saved.');
+    await renderAttendance();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  EXPENDITURE
+// ════════════════════════════════════════════════════
+async function renderExpenditure() {
+  const ym=MONTH;
+  if(!document.getElementById('e-month').value)document.getElementById('e-month').value=ym;
+  await loadExp();
+  await renderExpSummary();
+}
+
+async function loadExp() {
+  const filter=document.getElementById('e-filter')?.value||MONTH;
+  loading('exp-tbody');
+  try {
+    const r=await api('getExpenditure',{month:filter});
+    S.expenditure=r.records;
+    updateExpFilter(r.records);
+    document.getElementById('exp-tbody').innerHTML=r.records.length===0
+      ?`<tr><td colspan="6"><div class="empty">No entries for this month.</div></td></tr>`
+      :r.records.map(e=>`<tr>
+          <td>${monthName(e.month)}</td>
+          <td><span class="pill pa">${e.category}</span></td>
+          <td>${e.description}</td>
+          <td><strong>Rs.${Number(e.amount).toLocaleString()}</strong></td>
+          <td>${e.addedBy}</td>
+          <td><button class="btn bsm bred" onclick="delExp('${e.id}')">Del</button></td>
+        </tr>`).join('');
+  } catch(e){document.getElementById('exp-tbody').innerHTML=`<tr><td colspan="6"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+function updateExpFilter(records) {
+  const months=[...new Set(records.map(e=>e.month)),...[MONTH]].sort().reverse();
+  const sel=document.getElementById('e-filter'); if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=months.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${monthName(m)}</option>`).join('');
+}
+
+async function renderExpSummary() {
+  const ym=document.getElementById('e-month')?.value||MONTH;
+  try {
+    const r=await api('getExpenditure',{month:ym});
+    const exp=r.records;
+    const total=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const attRes=await api('getAttendance',{month:ym});
+    const totalMeals=calcTotalMeals(attRes.records);
+    const perMeal=totalMeals>0?Math.round(total/totalMeals):0;
+    const byCat={};
+    exp.forEach(e=>{byCat[e.category]=(byCat[e.category]||0)+Number(e.amount);});
+    document.getElementById('exp-summary').innerHTML=`
+      <div class="bsum">
+        ${Object.entries(byCat).map(([c,a])=>`<div class="brow2"><span>${c}</span><span class="amt">Rs.${a.toLocaleString()}</span></div>`).join('')}
+        <div class="brow2"><span>Total</span><span class="amt debit">Rs.${total.toLocaleString()}</span></div>
+      </div>
+      <div style="margin-top:10px;padding:9px;background:var(--cream);border-radius:3px;font-size:12.5px">
+        <strong>${totalMeals}</strong> meals → <strong>Rs.${perMeal}</strong> per meal
+      </div>`;
+  } catch(e){}
+}
+
+async function addExp() {
+  const month=document.getElementById('e-month').value;
+  const category=document.getElementById('e-cat').value;
+  const description=document.getElementById('e-desc').value.trim();
+  const amount=parseInt(document.getElementById('e-amt').value);
+  if(!month||!description||!amount){showToast('Fill all fields',true);return;}
+  try {
+    await api('addExpenditure',{month,category,description,amount,addedBy:S.user.fname});
+    document.getElementById('e-desc').value=''; document.getElementById('e-amt').value='';
+    showToast('✅ Expenditure added.');
+    await loadExp(); await renderExpSummary();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function delExp(id) {
+  try {
+    await api('deleteExpenditure',{id});
+    showToast('Entry deleted.');
+    await loadExp(); await renderExpSummary();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  BILLING
+// ════════════════════════════════════════════════════
+async function calcBilling() {
+  const ym=document.getElementById('bill-month')?.value||MONTH;
+  if(!document.getElementById('bill-month').value)document.getElementById('bill-month').value=ym;
+  loading('bill-tbody');
+  document.getElementById('bill-header').innerHTML='<div class="loading"><span class="spin"></span> Calculating...</div>';
+  try {
+    const [attRes,expRes,chgRes]=await Promise.all([
+      api('getAttendance',{month:ym}),
+      api('getExpenditure',{month:ym}),
+      api('getCharges',{month:ym}),
+    ]);
+    const att=attRes.records,exp=expRes.records,chg=chgRes.records;
+    const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const totalMeals=calcTotalMeals(att);
+    const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
+    document.getElementById('bill-header').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div class="sc sa" style="margin:0"><div class="sl">Total Expenditure</div><div class="sv">Rs.${(totalExp/1000).toFixed(1)}K</div></div>
+        <div class="sc so" style="margin:0"><div class="sl">Total Meals</div><div class="sv">${totalMeals}</div></div>
+        <div class="sc sg" style="margin:0"><div class="sl">Per Meal Rate</div><div class="sv">Rs.${perMeal}</div></div>
+        <div class="sc sr" style="margin:0"><div class="sl">Members Billed</div><div class="sv">${S.members.length}</div></div>
+      </div>`;
+    document.getElementById('bill-tbody').innerHTML=S.members.map(m=>{
+      const meals=getMemberMeals(att,m.id);
+      const mealCost=meals*perMeal;
+      const custom=getCustomTotal(chg,m.id,ym);
+      const gross=mealCost+custom;
+      const adv=Number(m.advance||6000);
+      const bal=adv-gross;
+      return `<tr>
+        <td><strong>${m.rank}</strong><br><span style="font-size:11px">${m.fname} ${m.lname}</span></td>
+        <td>${meals}</td><td>Rs.${mealCost.toLocaleString()}</td><td>Rs.${custom.toLocaleString()}</td>
+        <td><strong>Rs.${gross.toLocaleString()}</strong></td><td>Rs.${adv.toLocaleString()}</td>
+        <td class="${bal>=0?'credit':'debit'}"><strong>Rs.${Math.abs(bal).toLocaleString()} ${bal>=0?'↑':'↓'}</strong></td>
+        <td><span class="pill ${bal>=0?'pg':'pr'}">${bal>=0?'Surplus':'Due'}</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e){document.getElementById('bill-tbody').innerHTML=`<tr><td colspan="8"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+// ════════════════════════════════════════════════════
+//  CUSTOM CHARGES
+// ════════════════════════════════════════════════════
+function populateMemberSelect() {
+  const sel=document.getElementById('cc-target'); if(!sel)return;
+  sel.innerHTML=`<option value="all">All Members</option>`+S.members.map(m=>`<option value="${m.id}">${m.rank} ${m.fname} ${m.lname}</option>`).join('');
+}
+
+async function renderCharges() {
+  if(!document.getElementById('cc-month').value)document.getElementById('cc-month').value=MONTH;
+  populateMemberSelect();
+  loading('cc-tbody');
+  try {
+    const r=await api('getCharges',{month:MONTH});
+    S.charges=r.records;
+    document.getElementById('cc-tbody').innerHTML=r.records.length===0
+      ?`<tr><td colspan="5"><div class="empty">No custom charges.</div></td></tr>`
+      :r.records.map(c=>{
+          const mn=c.memberId==='all'?'All':(S.members.find(m=>m.id===c.memberId)||{fname:'?',lname:''});
+          const mname=c.memberId==='all'?'All':`${mn.fname||'?'} ${mn.lname||''}`;
+          return `<tr><td>${monthName(c.month)}</td><td>${c.name}</td><td>${mname}</td><td>Rs.${Number(c.amount).toLocaleString()}</td><td><button class="btn bsm bred" onclick="delCharge('${c.id}')">✘</button></td></tr>`;
+        }).join('');
+  } catch(e){document.getElementById('cc-tbody').innerHTML=`<tr><td colspan="5"><div class="empty">Error: ${e.message}</div></td></tr>`;}
+}
+
+async function addCharge() {
+  const month=document.getElementById('cc-month').value;
+  const name=document.getElementById('cc-name').value.trim();
+  const memberId=document.getElementById('cc-target').value;
+  const amount=parseInt(document.getElementById('cc-amt').value);
+  const notes=document.getElementById('cc-notes').value.trim();
+  if(!month||!name||!amount){showToast('Fill all required fields',true);return;}
+  try {
+    await api('addCharge',{month,name,memberId,amount,notes});
+    document.getElementById('cc-name').value=''; document.getElementById('cc-amt').value=''; document.getElementById('cc-notes').value='';
+    showToast('✅ Charge added.');
+    await renderCharges();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function delCharge(id) {
+  try {
+    await api('deleteCharge',{id});
+    showToast('Charge removed.');
+    await renderCharges();
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ════════════════════════════════════════════════════
+//  REPORTS
+// ════════════════════════════════════════════════════
+async function renderReports() {
+  loading('top-c'); loading('adv-ov');
+  try {
+    const [attRes,expRes,chgRes]=await Promise.all([
+      api('getAttendance',{month:MONTH}),
+      api('getExpenditure',{month:MONTH}),
+      api('getCharges',{month:MONTH}),
+    ]);
+    const att=attRes.records,exp=expRes.records,chg=chgRes.records;
+    const totalExp=exp.reduce((a,b)=>a+Number(b.amount),0);
+    const totalMeals=calcTotalMeals(att);
+    const perMeal=totalMeals>0?Math.round(totalExp/totalMeals):0;
+    document.getElementById('rpt-stats').innerHTML=`
+      <div class="sc sa"><div class="sl">Members</div><div class="sv">${S.members.length}</div></div>
+      <div class="sc so"><div class="sl">Month Exp.</div><div class="sv">Rs.${(totalExp/1000).toFixed(1)}K</div></div>
+      <div class="sc sg"><div class="sl">Per Meal</div><div class="sv">Rs.${perMeal}</div></div>
+      <div class="sc sr"><div class="sl">Pending</div><div class="sv">${S.requests.length}</div></div>`;
+    const ranked=S.members.map(m=>({m,meals:getMemberMeals(att,m.id)})).sort((a,b)=>b.meals-a.meals);
+    const maxM=ranked[0]?.meals||1;
+    document.getElementById('top-c').innerHTML=ranked.map((item,i)=>`
+      <div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--army);color:var(--gold-l);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center">${i+1}</div>
+        <div style="flex:1">
+          <div style="font-size:12.5px;font-weight:600">${item.m.rank} ${item.m.fname} ${item.m.lname}</div>
+          <div class="pbar" style="margin-top:3px"><div class="pfill" style="width:${Math.round(item.meals/maxM*100)}%;background:var(--army)"></div></div>
+        </div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--army)">${item.meals}</div>
+      </div>`).join('');
+    document.getElementById('adv-ov').innerHTML=S.members.map(m=>{
+      const cost=getMemberMeals(att,m.id)*perMeal+getCustomTotal(chg,m.id,MONTH);
+      const adv=Number(m.advance||6000);
+      const bal=adv-cost;
+      const pct=Math.min(100,Math.round(cost/adv*100));
+      return `<div style="margin-bottom:11px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span>${m.rank} ${m.fname}</span>
+          <span class="${bal>=0?'credit':'debit'}" style="font-weight:600">Rs.${Math.abs(bal).toLocaleString()} ${bal>=0?'left':'due'}</span>
+        </div>
+        <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>90?'var(--red)':pct>70?'var(--warn)':'var(--green)'}"></div></div>
+      </div>`;
+    }).join('');
+  } catch(e){showToast('Error: '+e.message,true);}
+}
+</script>
+</body>
+</html>
