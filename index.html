@@ -282,10 +282,10 @@ async function renderMealPlan() {
         <div class="fg"><label>First Name</label><input type="text" id="s-fn" placeholder="Muhammad"/></div>
         <div class="fg"><label>Last Name</label><input type="text" id="s-ln" placeholder="Ali"/></div>
       </div>
-      <div class="fg"><label>Rank</label>
+      <div class="fg"><label>Designation</label>
         <select id="s-rank">
-          <option>Lieutenant</option><option>Captain</option><option selected>Major</option>
-          <option>Lieutenant Colonel</option><option>Colonel</option><option>Brigadier</option>
+          <option>Internee/RA</option><option>Scientific Officer</option><option selected>Senior Scientist</option>
+          <option>Principal Scientist</option><option>Chief Scientist</option>
         </select>
       </div>
       <div class="fg"><label>Service Number</label><input type="text" id="s-svc" placeholder="SVC-XXXX"/></div>
@@ -369,7 +369,7 @@ async function renderMealPlan() {
     <div class="page" id="page-requests">
       <div class="card">
         <div class="shead"><h2>Pending Signup Requests</h2><div id="rcount" class="dchip"></div></div>
-        <div class="twrap"><table><thead><tr><th>Name</th><th>Rank</th><th>Svc No.</th><th>Email</th><th>Applied</th><th>Action</th></tr></thead><tbody id="req-tbody"></tbody></table></div>
+        <div class="twrap"><table><thead><tr><th>Name</th><th>Designation</th><th>Svc No.</th><th>Email</th><th>Applied</th><th>Action</th></tr></thead><tbody id="req-tbody"></tbody></table></div>
       </div>
     </div>
 
@@ -506,7 +506,7 @@ async function renderMealPlan() {
   <div class="modal">
     <h3>➕ Add New Member</h3>
     <div class="frow"><div class="fg"><label>First Name</label><input id="am-fn" type="text"/></div><div class="fg"><label>Last Name</label><input id="am-ln" type="text"/></div></div>
-    <div class="fg"><label>Rank</label><select id="am-rank"><option>Lieutenant</option><option>Captain</option><option>Major</option><option>Lieutenant Colonel</option><option>Colonel</option><option>Brigadier</option></select></div>
+    <div class="fg"><label>Designation</label><select id="am-rank"><option>Internee/RA</option><option>Scientific Officer</option><option>Senior Scientist</option><option>Principal Scientist</option><option>Chief Scientist</option></select></div>
     <div class="fg"><label>Service No.</label><input id="am-svc" type="text" placeholder="SVC-XXXX"/></div>
     <div class="fg"><label>Email</label><input id="am-email" type="email"/></div>
     <div class="fg"><label>Advance (Rs.)</label><input id="am-adv" type="number" value="6000"/></div>
