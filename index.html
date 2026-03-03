@@ -1052,31 +1052,41 @@ async function renderAttendance() {
 }
 
 // ── Auto-mark attendance from willingness after cutoff ──
+// Admin-edited dates are stored here so auto-mark never overwrites them
+const ADMIN_EDITED_DATES = new Set(JSON.parse(localStorage.getItem('adminEditedDates')||'[]'));
+
+function markDateAdminEdited(dateStr) {
+  ADMIN_EDITED_DATES.add(dateStr);
+  try { localStorage.setItem('adminEditedDates', JSON.stringify([...ADMIN_EDITED_DATES])); } catch(e){}
+}
+
 async function autoMarkFromWillingness() {
   try {
     const todayDay = getTodayDayAbbr();
     const dateStr  = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
-    const [attRes, wRes] = await Promise.all([
-      api('getAttendance',{month:MONTH}),
-      api('getMealWillingness',{})
-    ]);
-    const todayAtt = attRes.records.filter(a=>String(a.date).startsWith(dateStr));
-    const wAll     = wRes.records || [];
 
-    const entries = S.members.map(m => {
-      const ex = todayAtt.find(a=>a.memberId===m.id)||{};
-      // For each meal: if past cutoff, use willingness; else use existing attendance
-      const breakfast = isMealLocked(todayDay,'Breakfast')
-        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true')
-        : String(ex.breakfast)==='true';
-      const lunch = isMealLocked(todayDay,'Lunch')
-        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch` && String(w.willing)==='true')
-        : String(ex.lunch)==='true';
-      const dinner = isMealLocked(todayDay,'Dinner')
-        ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner` && String(w.willing)==='true')
-        : String(ex.dinner)==='true';
-      return {memberId:m.id, breakfast, lunch, dinner};
-    });
+    // If admin has manually edited today, do NOT overwrite
+    if(ADMIN_EDITED_DATES.has(dateStr)) {
+      showToast('ℹ️ Admin has manually edited today — auto-mark skipped.',false);
+      return null;
+    }
+
+    const wRes = await api('getMealWillingness',{});
+    const wAll = wRes.records || [];
+
+    // Overwrite everything — willingness always wins (for locked meals only)
+    const entries = S.members.map(m => ({
+      memberId  : m.id,
+      breakfast : isMealLocked(todayDay,'Breakfast')
+                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Breakfast` && String(w.willing)==='true')
+                  : false,
+      lunch     : isMealLocked(todayDay,'Lunch')
+                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Lunch` && String(w.willing)==='true')
+                  : false,
+      dinner    : isMealLocked(todayDay,'Dinner')
+                  ? !!wAll.find(w=>w.memberId===m.id && w.dayMeal===`${todayDay}-Dinner` && String(w.willing)==='true')
+                  : false,
+    }));
 
     await api('saveAttendance',{date:dateStr,entries,markedBy:'AutoMark'});
     return {entries, dateStr};
@@ -1106,9 +1116,13 @@ async function openAttModal(dateOverride) {
     const wAll     = wRes.records || [];
     const todayDay = getTodayDayAbbr();
 
+    const todayDateStr = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
+    const alreadyEdited = ADMIN_EDITED_DATES.has(todayDateStr);
     document.getElementById('att-modal-c').innerHTML=`
-      <div style="font-size:11px;color:var(--text-s);margin-bottom:10px;background:#f5f5e8;padding:8px;border-radius:4px">
-        🔒 Locked meals are auto-filled from willingness. Admin can override any checkbox.
+      <div style="font-size:11px;color:var(--text-s);margin-bottom:10px;background:${alreadyEdited?'#fef3cd':'#f5f5e8'};padding:8px;border-radius:4px">
+        ${alreadyEdited
+          ? '⚠️ You have manually edited today. Auto-mark is <strong>disabled</strong> for today. Saving again will keep your edits.'
+          : '🔒 Locked meals are auto-filled from willingness. Saving here disables auto-mark for today.'}
       </div>
       <table style="width:100%;font-size:13px">
         <thead>
@@ -1147,7 +1161,7 @@ async function openAttModal(dateOverride) {
 }
 
 async function saveAtt() {
-  const dateStr=TODAY.toISOString().split('T')[0];
+  const dateStr = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});
   const entries=S.members.map(m=>({
     memberId:m.id,
     breakfast:document.getElementById(`at-${m.id}-b`)?.checked||false,
@@ -1156,8 +1170,10 @@ async function saveAtt() {
   }));
   try {
     await api('saveAttendance',{date:dateStr,entries,markedBy:S.user.fname});
+    // Flag this date as admin-edited — auto-mark will NOT overwrite it
+    markDateAdminEdited(dateStr);
     closeModal('modal-att');
-    showToast('✅ Attendance saved.');
+    showToast('✅ Attendance saved. Auto-mark disabled for today.');
     await renderAttendance();
   } catch(e){showToast('Error: '+e.message,true);}
 }
